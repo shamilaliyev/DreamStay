@@ -1,0 +1,29 @@
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Frontend build cache
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Backend build & gradle
+backend/build/
+backend/.gradle/
+backend/bin/
+
+# Uploads & runtime data
+backend/uploads/
+backend/identity-docs/
+backend/messages.json
+backend/properties.json
+backend/users.json
+
+# IDE
+.idea/
+*.im.DS_Store
