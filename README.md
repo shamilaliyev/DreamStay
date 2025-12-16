@@ -2,7 +2,7 @@
 
 ## About the Project
 
-**DreamStay** is a full-stack web application developed as a university academic project, designed to simulate a real-world houses and accommodation booking platform. The project follows a modern Frontend + Backend architecture and demonstrates practical full-stack development skills.
+**DreamStay** is a full-stack web application developed as a university academic project, designed to simulate a real-world hotel and accommodation booking platform. The project follows a modern Frontend + Backend architecture and demonstrates practical full-stack development skills.
 
 The main goals of this project are:
 
@@ -20,7 +20,7 @@ This project was developed for academic purposes and aims to demonstrate:
 - Usage of modern JavaScript frameworks
 - Backend development with Java technologies
 - API design and implementation
-- GitHub workflow in team projects
+- Git and GitHub workflow in team projects
 - Proper project structuring for real-world applications
 
 
@@ -31,7 +31,7 @@ This project was developed for academic purposes and aims to demonstrate:
 - Vite
 - HTML5
 - CSS3
-- JavaScript
+- JavaScript (ES6+)
 
 ### Backend
 - Java (Spring Boot)
@@ -46,7 +46,7 @@ JSON-based data files:
 - `messages.json`
 
 ### Other Tools and Concepts
-- GitHub
+- Git and GitHub
 - REST APIs
 - Multipart file upload (image handling)
 
@@ -54,7 +54,7 @@ JSON-based data files:
 ## Project Structure
 
 ```
-DreamStay/
+DreamStay14/
 │
 ├── frontend/          # Client-side application (React + Vite)
 │   ├── src/
@@ -106,7 +106,7 @@ The frontend communicates with the backend through RESTful APIs.
 Main functionalities include:
 
 - Fetching and displaying user data
-- Listing available properties (houses and accommodations)
+- Listing available properties (hotels and accommodations)
 - Adding and displaying reviews
 - Sending and storing user messages
 - Uploading and handling images
@@ -154,9 +154,7 @@ Key collaboration aspects:
 
 ## Academic Note
 
-This project was developed purely for educational purposes and is meant to illustrate real-world software engineering concepts that are taught at the university level.
-
-Skills demonstrated include:
+This project was developed purely for educational purposes and is meant to illustrate real-world software engineering concepts that are taught at the university level. Skills demonstrated include:
 
 - Full-stack web development
 - Team collaboration
@@ -167,6 +165,23 @@ Skills demonstrated include:
 ## Project Author
 
 WhoCares Team
+
+
+## Team Contributions
+
+This project was developed collaboratively by a team of four members. The workload was distributed equally, with each member contributing approximately 25% to the overall project.
+
+### Contribution Details
+
+- **Shamil Aliyev (25%)** -- Backend development, including server-side logic, REST API implementation, data handling, and application configuration.
+
+- **Yusif Behbudov (25%)** -- Frontend development, including user interface design, component structure, state management, and frontend-backend integration.
+
+- **Yusif Abbasov (25%)** -- Assisted with frontend development, contributing to UI components, feature implementation, testing, and improving user experience.
+
+- **Ayyub Guluzada (25%)** -- Assisted with backend development, supporting API development, testing server-side functionality, debugging, and integration tasks.
+
+All team members were involved in planning, development, testing, and integration phases, ensuring balanced and equal participation throughout the project lifecycle.
 
 
 ## License
