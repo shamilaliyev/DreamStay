@@ -13,9 +13,14 @@ package services;
  */
 
 import models.*;
+import exceptions.*;
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 
 public class AuthService {
     private static final String FILE_PATH = "users.json";
@@ -47,182 +52,108 @@ public class AuthService {
             saveUsers();
             return;
         }
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
-            StringBuilder json = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                json.append(line);
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode rootNode = mapper.readTree(file);
+
+            users.clear();
+            if (rootNode.isArray()) {
+                for (JsonNode node : rootNode) {
+                    try {
+                        // Use manual parsing helper to avoid need for default constructors in models
+                        User user = parseUserFromNode(node);
+
+                        if (user != null) {
+                            users.add(user);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Skipping invalid user node: " + e.getMessage());
+                    }
+                }
             }
-            parseJson(json.toString());
         } catch (IOException e) {
             System.err.println("Error loading users: " + e.getMessage());
         }
     }
 
     public void saveUsers() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
-            writer.write(toJson());
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.enable(SerializationFeature.INDENT_OUTPUT); // Pretty print
+            mapper.writeValue(new File(FILE_PATH), users);
         } catch (IOException e) {
             System.err.println("Error saving users: " + e.getMessage());
         }
     }
 
-    private void parseJson(String json) {
-        if (json == null || json.trim().isEmpty() || json.equals("[]"))
-            return;
+    // Helper to keep using existing constructors without modifying Model classes
+    // substantially
+    private User parseUserFromNode(JsonNode node) {
+        Long id = node.has("id") ? node.get("id").asLong() : 0L;
+        String name = node.has("name") ? node.get("name").asText() : "";
+        String email = node.has("email") ? node.get("email").asText() : "";
+        String role = node.has("role") ? node.get("role").asText() : "";
+        String password = node.has("password") ? node.get("password").asText() : "";
+        boolean isVerified = node.has("verified") ? node.get("verified").asBoolean()
+                : (node.has("isVerified") ? node.get("isVerified").asBoolean() : false);
+        String govId = node.has("governmentId") ? node.get("governmentId").asText() : null;
+        if ("null".equals(govId))
+            govId = null;
 
-        // Simple manual JSON array parser
-        // Assumes objects are separated by "},{" inside the array brackets
-        String inner = json.trim();
-        if (inner.startsWith("["))
-            inner = inner.substring(1);
-        if (inner.endsWith("]"))
-            inner = inner.substring(0, inner.length() - 1);
+        User u = switch (role.toLowerCase()) {
+            case "admin" -> new Admin(id, name, email, password, isVerified, govId);
+            case "buyer" -> new Buyer(id, name, email, password, isVerified, govId);
+            case "seller" -> new Seller(id, name, email, password, isVerified, govId);
+            case "agent" -> new Agent(id, name, email, password, isVerified, govId);
+            default -> null;
+        };
 
-        List<String> userStrings = splitJsonObjects(inner);
+        if (u != null) {
+            if (node.has("averageRating"))
+                u.setAverageRating(node.get("averageRating").asDouble());
+            if (node.has("reviewCount"))
+                u.setReviewCount(node.get("reviewCount").asInt());
+            if (node.has("emailVerified"))
+                u.setEmailVerified(node.get("emailVerified").asBoolean());
+            if (node.has("idVerified"))
+                u.setIdVerified(node.get("idVerified").asBoolean());
+            if (node.has("approved"))
+                u.setApproved(node.get("approved").asBoolean()); // Jackson field name might trigger 'isApproved' getter
+                                                                 // so 'approved' in JSON
+            if (node.has("isApproved"))
+                u.setApproved(node.get("isApproved").asBoolean());
 
-        users.clear();
-        for (String userString : userStrings) {
-            User user = parseUser(userString);
-            if (user != null) {
-                users.add(user);
-            }
-        }
-    }
-
-    private List<String> splitJsonObjects(String inner) {
-        List<String> list = new ArrayList<>();
-        int braceCount = 0;
-        StringBuilder current = new StringBuilder();
-        for (char c : inner.toCharArray()) {
-            if (c == '{')
-                braceCount++;
-            if (c == '}')
-                braceCount--;
-            current.append(c);
-            if (braceCount == 0 && c == '}' && current.length() > 0) {
-                list.add(current.toString());
-                current = new StringBuilder();
-            } else if (braceCount == 0 && c == ',') {
-                // skip comma between objects
-                current = new StringBuilder();
-            }
-        }
-        return list;
-    }
-
-    private String toJson() {
-        StringBuilder json = new StringBuilder("[");
-        for (int i = 0; i < users.size(); i++) {
-            User user = users.get(i);
-            json.append(userToJson(user));
-            if (i < users.size() - 1) {
-                json.append(",");
-            }
-        }
-        json.append("]");
-        return json.toString();
-    }
-
-    private String userToJson(User user) {
-        return String.format(
-                "{\"id\":%d,\"name\":\"%s\",\"email\":\"%s\",\"role\":\"%s\",\"password\":\"%s\",\"isVerified\":%b,\"emailVerified\":%b,\"idVerified\":%b,\"isApproved\":%b,\"governmentId\":\"%s\",\"idDocumentPath\":\"%s\",\"avatarPath\":\"%s\",\"bio\":\"%s\",\"phoneNumber\":\"%s\",\"city\":\"%s\",\"occupation\":\"%s\",\"averageRating\":%.2f,\"reviewCount\":%d}",
-                user.getId(), user.getName(), user.getEmail(), user.getRole(), user.getPassword(), user.isVerified(),
-                user.isEmailVerified(), user.isIdVerified(), user.isApproved(),
-                user.getGovernmentId() == null ? "null" : user.getGovernmentId(),
-                user.getIdDocumentPath() == null ? "null" : user.getIdDocumentPath(),
-                user.getAvatarPath() == null ? "null" : user.getAvatarPath(),
-                user.getBio() == null ? "null" : user.getBio(),
-                user.getPhoneNumber() == null ? "null" : user.getPhoneNumber(),
-                user.getCity() == null ? "null" : user.getCity(),
-                user.getOccupation() == null ? "null" : user.getOccupation(),
-                user.getAverageRating(), user.getReviewCount());
-    }
-
-    private User parseUser(String json) {
-        Map<String, String> fields = parseJsonFields(json);
-        Long id = null;
-        String name = null, email = null, role = null, password = null, govId = null;
-        boolean isVerified = false;
-
-        try {
-            id = Long.parseLong(fields.getOrDefault("id", "0"));
-            name = fields.getOrDefault("name", "");
-            email = fields.getOrDefault("email", "");
-            role = fields.getOrDefault("role", "");
-            password = fields.getOrDefault("password", "");
-            isVerified = Boolean.parseBoolean(fields.getOrDefault("isVerified", "false"));
-            govId = fields.getOrDefault("governmentId", "null");
-            if (govId.equals("null"))
-                govId = null;
-            double rating = Double.parseDouble(fields.getOrDefault("averageRating",
-                    fields.getOrDefault("rating", "0.0")));
-            int reviewCount = Integer.parseInt(fields.getOrDefault("reviewCount", "0"));
-
-            User u = switch (role.toLowerCase()) {
-                case "admin" -> new Admin(id, name, email, password, isVerified, govId);
-                case "buyer" -> new Buyer(id, name, email, password, isVerified, govId);
-                case "seller" -> new Seller(id, name, email, password, isVerified, govId);
-                case "agent" -> new Agent(id, name, email, password, isVerified, govId);
-                default -> null;
-            };
-            if (u != null) {
-                u.setAverageRating(rating);
-                u.setReviewCount(reviewCount);
-                // Load additional fields if present
-                u.setEmailVerified(Boolean.parseBoolean(fields.getOrDefault("emailVerified", "false")));
-                u.setIdVerified(Boolean.parseBoolean(fields.getOrDefault("idVerified", "false")));
-                u.setApproved(Boolean.parseBoolean(fields.getOrDefault("isApproved", "false")));
-                String idDocPath = fields.getOrDefault("idDocumentPath", "null");
-                if (!idDocPath.equals("null")) {
-                    u.setIdDocumentPath(idDocPath);
+            // DATA HEALING: If legacy 'isVerified' is true, ensure email and ID are also
+            // verified
+            // This fixes users who were verified before the granule flags were added/fixed
+            if (u.isVerified()) {
+                if (!u.isEmailVerified())
+                    u.setEmailVerified(true);
+                if (!u.isIdVerified())
+                    u.setIdVerified(true);
+                // We might also assume they are approved if they are verified, for non-admins?
+                // Let's be safe and only touch verification flags.
+                // Actually, for Sellers/Agents, verifyUser also sets approved=true.
+                if (!u.isApproved() && !u.getRole().equalsIgnoreCase("admin")) {
+                    u.setApproved(true);
                 }
-                String avatar = fields.getOrDefault("avatarPath", "null");
-                if (!avatar.equals("null"))
-                    u.setAvatarPath(avatar);
-                String bio = fields.getOrDefault("bio", "null");
-                if (!bio.equals("null"))
-                    u.setBio(bio);
-                String phone = fields.getOrDefault("phoneNumber", "null");
-                if (!phone.equals("null"))
-                    u.setPhoneNumber(phone);
-                String city = fields.getOrDefault("city", "null");
-                if (!city.equals("null"))
-                    u.setCity(city);
-                String occ = fields.getOrDefault("occupation", "null");
-                if (!occ.equals("null"))
-                    u.setOccupation(occ);
             }
-            return u;
-        } catch (Exception e) {
-            System.out.println("Error parsing user fields: " + e.getMessage());
-            return null;
+
+            if (node.has("idDocumentPath") && !node.get("idDocumentPath").isNull())
+                u.setIdDocumentPath(node.get("idDocumentPath").asText());
+            if (node.has("avatarPath") && !node.get("avatarPath").isNull())
+                u.setAvatarPath(node.get("avatarPath").asText());
+            if (node.has("bio") && !node.get("bio").isNull())
+                u.setBio(node.get("bio").asText());
+            if (node.has("phoneNumber") && !node.get("phoneNumber").isNull())
+                u.setPhoneNumber(node.get("phoneNumber").asText());
+            if (node.has("city") && !node.get("city").isNull())
+                u.setCity(node.get("city").asText());
+            if (node.has("occupation") && !node.get("occupation").isNull())
+                u.setOccupation(node.get("occupation").asText());
         }
-    }
-
-    private Map<String, String> parseJsonFields(String json) {
-        Map<String, String> fields = new HashMap<>();
-        // Remove braces
-        String content = json.trim();
-        if (content.startsWith("{"))
-            content = content.substring(1);
-        if (content.endsWith("}"))
-            content = content.substring(0, content.length() - 1);
-
-        // Split by comma, but be careful about commas in values?
-        // For this prototype, we assume no commas in values or handle simple cases.
-        // A regex split is better.
-        String[] pairs = content.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
-
-        for (String pair : pairs) {
-            String[] keyValue = pair.split(":(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
-            if (keyValue.length == 2) {
-                String key = keyValue[0].trim().replace("\"", "");
-                String value = keyValue[1].trim().replace("\"", "");
-                fields.put(key, value);
-            }
-        }
-        return fields;
+        return u;
     }
 
     private void initializeDefaultUsers() {
@@ -257,7 +188,10 @@ public class AuthService {
         users.add(agent);
     }
 
-    public User login(String email, String password) {
+    public User login(String rawEmail, String password) {
+        if (rawEmail == null)
+            return null;
+        String email = rawEmail.trim(); // TRIM INPUT
         // Emergency Fallback: Ensure Main Admin can always login
         if (email.equalsIgnoreCase("admin1@ds.gmail.com") && password.equals("admin1ds")) {
             System.out.println("Login successful (System Admin Override).");
@@ -274,7 +208,7 @@ public class AuthService {
                 // Verify password
                 if (user.getPassword() == null || !securityService.verifyPassword(password, user.getPassword())) {
                     System.out.println("Login failed: Invalid credentials.");
-                    return null;
+                    throw new InvalidCredentialsException("Invalid credentials");
                 }
 
                 String role = user.getRole().toLowerCase();
@@ -283,7 +217,7 @@ public class AuthService {
                 // handled above)
                 if (!user.isEmailVerified() && !isMainAdmin(user)) {
                     System.out.println("Login failed: Email not verified.");
-                    return null;
+                    throw new EmailNotVerifiedException("Email not verified");
                 }
 
                 // Rule 2: Role-based checks
@@ -294,17 +228,17 @@ public class AuthService {
                     // Admins must be verified/approved
                     if (!user.isVerified() && !isMainAdmin(user)) {
                         System.out.println("Login failed: Admin account not verified.");
-                        return null;
+                        throw new AccountPendingApprovalException("Admin account not verified");
                     }
                 } else {
                     // Sellers and Agents
                     if (!user.isIdVerified()) {
                         System.out.println("Login failed: ID document not verified.");
-                        return null;
+                        throw new IdNotVerifiedException("ID document not verified");
                     }
                     if (!user.isApproved()) {
                         System.out.println("Login failed: Account pending admin approval.");
-                        return null;
+                        throw new AccountPendingApprovalException("Account pending admin approval");
                     }
                 }
 
@@ -312,11 +246,14 @@ public class AuthService {
                 return user;
             }
         }
-        System.out.println("Login failed: Invalid credentials.");
-        return null;
+        System.out.println("Login failed: User not found.");
+        throw new InvalidCredentialsException("Invalid credentials");
     }
 
-    public User register(String name, String email, String password, String role, String govId) {
+    public User register(String rawName, String rawEmail, String password, String role, String govId) {
+        String name = rawName != null ? rawName.trim() : "";
+        String email = rawEmail != null ? rawEmail.trim() : "";
+
         if (users.stream().anyMatch(u -> u.getEmail().equalsIgnoreCase(email))) {
             System.out.println("Registration failed: Email already exists.");
             return null;
@@ -387,6 +324,7 @@ public class AuthService {
             User user = userOpt.get();
             user.setVerified(true);
             user.setIdVerified(true); // Also verify ID if document was checked
+            user.setEmailVerified(true); // FIX: Ensure email is marked verified when admin manually verifies
             user.setApproved(true); // Grant approval for login
             saveUsers();
             System.out.println("User verified: " + user.getName());

@@ -30,13 +30,16 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         try {
             User user = authService.login(request.email(), request.password());
-            if (user != null) {
-                return ResponseEntity.ok(dtoMapper.toUserDTO(user));
-            } else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
-            }
+            return ResponseEntity.ok(dtoMapper.toUserDTO(user));
+        } catch (exceptions.InvalidCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (exceptions.EmailNotVerifiedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (exceptions.IdNotVerifiedException | exceptions.AccountPendingApprovalException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An unexpected error occurred: " + e.getMessage());
         }
     }
 
