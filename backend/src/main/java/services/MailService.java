@@ -24,15 +24,19 @@ public class MailService {
     }
 
     public void sendMessage(User sender, String recipientEmail, String text) {
-        User recipient = authService.getAllUsers().stream()
-                .filter(u -> u.getEmail().equalsIgnoreCase(recipientEmail))
-                .findFirst().orElse(null);
+        User recipient = authService.getUserByEmail(recipientEmail);
+        if (recipient != null) {
+            sendMessage(sender, recipient, text);
+        } else {
+            System.out.println("Recipient not found: " + recipientEmail);
+        }
+    }
 
+    public void sendMessage(User sender, User recipient, String text) {
         if (recipient == null) {
-            System.out.println("Recipient not found.");
+            System.out.println("Recipient is null, cannot send message.");
             return;
         }
-
         messageRepository.saveMessage(sender.getId(), recipient.getId(), null, text);
         System.out.println("Message sent to " + recipient.getName());
     }

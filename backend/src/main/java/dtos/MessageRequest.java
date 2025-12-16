@@ -1,4 +1,4 @@
 package dtos;
 
-public record MessageRequest(String recipientEmail, String content) {
+public record MessageRequest(String recipientEmail, Long recipientId, String content) {
 }

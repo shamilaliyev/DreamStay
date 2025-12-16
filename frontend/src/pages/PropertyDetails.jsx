@@ -30,19 +30,23 @@ const PropertyDetails = () => {
 
     const handleSendMessage = async (e) => {
         e.preventDefault();
+        console.log('Sending message:', { recipientId: property.ownerId, content: message });
+
+        if (!property.ownerId) {
+            alert('Error: Property owner ID is missing.');
+            return;
+        }
+
         try {
-            const ownerRes = await api.get(`/users/${property.ownerId}`);
-            const ownerEmail = ownerRes.data.email;
             await api.post('/messages', {
-                recipientEmail: ownerEmail,
+                recipientId: property.ownerId,
                 content: message
-            }, {
-                headers: { 'X-User-Id': user.id }
-            });
+            }); // Header handled by interceptor
             alert('Message sent!');
             setMessage('');
         } catch (error) {
-            alert('Failed to send message: ' + (error.response?.data || error.message));
+            console.error('Send failed:', error);
+            alert('Failed to send message: ' + (typeof error.response?.data === 'string' ? error.response.data : JSON.stringify(error.response?.data)) || error.message);
         }
     };
 

@@ -77,16 +77,18 @@ public class MessageController {
         if (sender == null)
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
-        mailService.sendMessage(sender, request.recipientEmail(), request.content());
-        // Since sendMessage is void and assumes success (prints to console), we just
-        // return 200.
-        // It handles recipient not found by printing "Recipient not found".
-        // To be safe, we can check if recipient exists first.
-        User recipient = authService.getUserByEmail(request.recipientEmail());
+        User recipient = null;
+        if (request.recipientId() != null) {
+            recipient = authService.getUserById(request.recipientId());
+        } else if (request.recipientEmail() != null) {
+            recipient = authService.getUserByEmail(request.recipientEmail());
+        }
+
         if (recipient == null) {
             return ResponseEntity.badRequest().body("Recipient not found");
         }
 
+        mailService.sendMessage(sender, recipient.getEmail(), request.content());
         return ResponseEntity.ok("Message sent");
     }
 
