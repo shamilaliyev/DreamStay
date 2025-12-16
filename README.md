@@ -2,7 +2,7 @@
 
 ## About the Project
 
-**DreamStay** is a full-stack web application developed as a university academic project, designed to simulate a real-world hotel and accommodation booking platform. The project follows a modern Frontend + Backend architecture and demonstrates practical full-stack development skills.
+**DreamStay** is a full-stack web application developed as a university academic project, designed to simulate a real-world real estate listing platform where users can list, browse, and explore properties for sale or rent. The project follows a modern Frontend + Backend architecture and demonstrates practical full-stack development skills.
 
 The main goals of this project are:
 
