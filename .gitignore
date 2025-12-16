@@ -13,3 +13,6 @@ backend/.gradle/
 
 # Node
 frontend/node_modules/
+
+backend/identity-docs/
+
