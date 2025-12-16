@@ -221,6 +221,13 @@ public class PropertyManager {
     }
 
     public void addProperty(Property property) {
+        // Generate new ID
+        Long maxId = properties.stream()
+                .mapToLong(Property::getId)
+                .max()
+                .orElse(0L);
+        property.setId(maxId + 1);
+
         properties.add(property);
         saveProperties();
     }
