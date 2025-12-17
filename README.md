@@ -173,13 +173,13 @@ This project was developed collaboratively by a team of four members. The worklo
 
 ### Contribution Details
 
-- **Shamil Aliyev (25%)** -- Backend development, including server-side logic, REST API implementation, data handling, and application configuration.
+- **Shamil Aliyev (45%)** -- Backend development, including server-side logic, REST API implementation, data handling, and application configuration.
 
 - **Yusif Behbudov (25%)** -- Frontend development, including user interface design, component structure, state management, and frontend-backend integration.
 
-- **Yusif Abbasov (25%)** -- Assisted with frontend development, contributing to UI components, feature implementation, testing, and improving user experience.
+- **Yusif Abbasov (15%)** -- Assisted with frontend development, contributing to UI components, feature implementation, testing, and improving user experience.
 
-- **Ayyub Guluzada (25%)** -- Assisted with backend development, supporting API development, testing server-side functionality, debugging, and integration tasks.
+- **Ayyub Guluzada (15%)** -- Assisted with backend development, supporting API development, testing server-side functionality, debugging, and integration tasks.
 
 All team members were involved in planning, development, testing, and integration phases, ensuring balanced and equal participation throughout the project lifecycle.
 
