@@ -2,7 +2,20 @@ package config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import services.*;
+
+import repositories.UserRepository;
+import services.AuthService;
+import services.EmailVerificationService;
+import services.FileUploadService;
+import services.IDUploadService;
+import services.MailService;
+import services.MessageRepository;
+import services.PropertyManager;
+import services.ReportService;
+import services.ReviewService;
+import services.SecurityService;
+import services.VerificationService;
+import repositories.PropertyRepository;
 
 @Configuration
 public class AppConfig {
@@ -13,28 +26,31 @@ public class AppConfig {
     }
 
     @Bean
-    public AuthService authService(SecurityService securityService) {
-        return new AuthService(securityService);
+    public AuthService authService(UserRepository userRepository, SecurityService securityService) {
+        // AuthService now uses the database via UserRepository instead of JSON files
+        return new AuthService(userRepository, securityService);
     }
 
     @Bean
-    public PropertyManager propertyManager() {
-        return new PropertyManager();
+    public PropertyManager propertyManager(PropertyRepository propertyRepository) {
+        return new PropertyManager(propertyRepository);
     }
 
     @Bean
-    public MessageRepository messageRepository() {
-        return new MessageRepository();
+    public MessageRepository messageManager(repositories.MessageRepository jpaMessageRepository) {
+        return new MessageRepository(jpaMessageRepository);
     }
 
     @Bean
-    public MailService mailService(AuthService authService, MessageRepository messageRepository) {
-        return new MailService(authService, messageRepository);
+    public MailService mailService(AuthService authService, MessageRepository messageRepository,
+            repositories.BlockRepository blockRepository) {
+        return new MailService(authService, messageRepository, blockRepository);
     }
 
     @Bean
-    public ReviewService reviewService(AuthService authService, MessageRepository messageRepository) {
-        return new ReviewService(authService, messageRepository);
+    public ReviewService reviewService(AuthService authService, MessageRepository messageManager,
+            repositories.ReviewRepository reviewRepository) {
+        return new ReviewService(authService, messageManager, reviewRepository);
     }
 
     @Bean
@@ -53,8 +69,8 @@ public class AppConfig {
     }
 
     @Bean
-    public ReportService reportService() {
-        return new ReportService();
+    public ReportService reportService(repositories.ReportRepository reportRepository) {
+        return new ReportService(reportRepository);
     }
 
     @Bean

@@ -2,196 +2,82 @@ package services;
 
 /**
  * author @frhetto Nijat Alisoy
- * This class authenticates the users that are in the users.json file (database)
+ * This class authenticates the users stored in the PostgreSQL database.
  * User Management: Stores and handles User objects.
- * Data Persistence: Reads and writes user data to a file.
+ * Data Persistence: Reads and writes user data to the database via UserRepository.
  * Login: Authenticates users by email.
  * Default Users: Initializes with default users if no data exists.
- * JSON Handling: Serializes and parses user data in JSON format.
- * Error Handling: Handles file and data-related issues gracefully.
+ * Error Handling: Handles data-related issues gracefully.
  * 
  */
 
-import models.*;
-import exceptions.*;
-import java.io.*;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
+
+import exceptions.AccountPendingApprovalException;
+import exceptions.EmailNotVerifiedException;
+import exceptions.IdNotVerifiedException;
+import exceptions.InvalidCredentialsException;
+import models.Admin;
+import models.Agent;
+import models.Buyer;
+import models.Seller;
+import models.User;
+import repositories.UserRepository;
 
 public class AuthService {
-    private static final String FILE_PATH = "users.json";
-    private List<User> users;
-    private SecurityService securityService;
 
-    public AuthService(SecurityService securityService) {
+    private final UserRepository userRepository;
+    private final SecurityService securityService;
+
+    public AuthService(UserRepository userRepository, SecurityService securityService) {
+        this.userRepository = userRepository;
         this.securityService = securityService;
-        users = new ArrayList<>();
-        loadUsers();
-        // Ensure default admin exists and is verified
-        if (users.stream().noneMatch(u -> u.getRole().equalsIgnoreCase("admin"))) {
-            initializeDefaultUsers();
-            saveUsers();
-        }
+        ensureDefaultAdminExists();
     }
 
-    // Constructor for backward compatibility (creates its own SecurityService)
-    public AuthService() {
-        this(new SecurityService());
-    }
+    private void ensureDefaultAdminExists() {
+        boolean adminExists = userRepository.findAll().stream()
+                .anyMatch(u -> u.getRole() != null && u.getRole().equalsIgnoreCase("admin"));
+        if (!adminExists) {
+            Admin mainAdmin = new Admin(null, "Main Admin", "admin1@ds.gmail.com",
+                    securityService.hashPassword("admin1ds"), true, "MAIN_ADMIN_001");
+            mainAdmin.setEmailVerified(true);
+            mainAdmin.setIdVerified(true);
+            mainAdmin.setApproved(true);
+            userRepository.save(mainAdmin);
 
-    private void loadUsers() {
-        File file = new File(FILE_PATH);
-        System.out.println("DEBUG: Loading users from: " + file.getAbsolutePath());
-        if (!file.exists()) {
-            System.out.println("DEBUG: File not found. creating new defaults.");
-            initializeDefaultUsers();
-            saveUsers();
-            return;
+            // Optional: seed a couple of demo users if desired
+            Buyer buyer = new Buyer(null, "Buyer User", "buyer@example.com",
+                    securityService.hashPassword("buyer123"), true, "BUYER001");
+            buyer.setEmailVerified(true);
+            buyer.setIdVerified(true);
+            buyer.setApproved(true);
+            userRepository.save(buyer);
+
+            Seller seller = new Seller(null, "Seller User", "seller@example.com",
+                    securityService.hashPassword("seller123"), true, "SELLER001");
+            seller.setEmailVerified(true);
+            seller.setIdVerified(true);
+            seller.setApproved(true);
+            userRepository.save(seller);
+
+            Agent agent = new Agent(null, "Agent User", "agent@example.com",
+                    securityService.hashPassword("agent123"), true, "AGENT001");
+            agent.setEmailVerified(true);
+            agent.setIdVerified(true);
+            agent.setApproved(true);
+            userRepository.save(agent);
         }
-
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode rootNode = mapper.readTree(file);
-
-            users.clear();
-            if (rootNode.isArray()) {
-                for (JsonNode node : rootNode) {
-                    try {
-                        // Use manual parsing helper to avoid need for default constructors in models
-                        User user = parseUserFromNode(node);
-
-                        if (user != null) {
-                            users.add(user);
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Skipping invalid user node: " + e.getMessage());
-                    }
-                }
-            }
-        } catch (IOException e) {
-            System.err.println("Error loading users: " + e.getMessage());
-        }
-    }
-
-    public void saveUsers() {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.enable(SerializationFeature.INDENT_OUTPUT); // Pretty print
-            mapper.writeValue(new File(FILE_PATH), users);
-        } catch (IOException e) {
-            System.err.println("Error saving users: " + e.getMessage());
-        }
-    }
-
-    // Helper to keep using existing constructors without modifying Model classes
-    // substantially
-    private User parseUserFromNode(JsonNode node) {
-        Long id = node.has("id") ? node.get("id").asLong() : 0L;
-        String name = node.has("name") ? node.get("name").asText() : "";
-        String email = node.has("email") ? node.get("email").asText() : "";
-        String role = node.has("role") ? node.get("role").asText() : "";
-        String password = node.has("password") ? node.get("password").asText() : "";
-        boolean isVerified = node.has("verified") ? node.get("verified").asBoolean()
-                : (node.has("isVerified") ? node.get("isVerified").asBoolean() : false);
-        String govId = node.has("governmentId") ? node.get("governmentId").asText() : null;
-        if ("null".equals(govId))
-            govId = null;
-
-        User u = switch (role.toLowerCase()) {
-            case "admin" -> new Admin(id, name, email, password, isVerified, govId);
-            case "buyer" -> new Buyer(id, name, email, password, isVerified, govId);
-            case "seller" -> new Seller(id, name, email, password, isVerified, govId);
-            case "agent" -> new Agent(id, name, email, password, isVerified, govId);
-            default -> null;
-        };
-
-        if (u != null) {
-            if (node.has("averageRating"))
-                u.setAverageRating(node.get("averageRating").asDouble());
-            if (node.has("reviewCount"))
-                u.setReviewCount(node.get("reviewCount").asInt());
-            if (node.has("emailVerified"))
-                u.setEmailVerified(node.get("emailVerified").asBoolean());
-            if (node.has("idVerified"))
-                u.setIdVerified(node.get("idVerified").asBoolean());
-            if (node.has("approved"))
-                u.setApproved(node.get("approved").asBoolean()); // Jackson field name might trigger 'isApproved' getter
-                                                                 // so 'approved' in JSON
-            if (node.has("isApproved"))
-                u.setApproved(node.get("isApproved").asBoolean());
-
-            // DATA HEALING: If legacy 'isVerified' is true, ensure email and ID are also
-            // verified
-            // This fixes users who were verified before the granule flags were added/fixed
-            if (u.isVerified()) {
-                if (!u.isEmailVerified())
-                    u.setEmailVerified(true);
-                if (!u.isIdVerified())
-                    u.setIdVerified(true);
-                // We might also assume they are approved if they are verified, for non-admins?
-                // Let's be safe and only touch verification flags.
-                // Actually, for Sellers/Agents, verifyUser also sets approved=true.
-                if (!u.isApproved() && !u.getRole().equalsIgnoreCase("admin")) {
-                    u.setApproved(true);
-                }
-            }
-
-            if (node.has("idDocumentPath") && !node.get("idDocumentPath").isNull())
-                u.setIdDocumentPath(node.get("idDocumentPath").asText());
-            if (node.has("avatarPath") && !node.get("avatarPath").isNull())
-                u.setAvatarPath(node.get("avatarPath").asText());
-            if (node.has("bio") && !node.get("bio").isNull())
-                u.setBio(node.get("bio").asText());
-            if (node.has("phoneNumber") && !node.get("phoneNumber").isNull())
-                u.setPhoneNumber(node.get("phoneNumber").asText());
-            if (node.has("city") && !node.get("city").isNull())
-                u.setCity(node.get("city").asText());
-            if (node.has("occupation") && !node.get("occupation").isNull())
-                u.setOccupation(node.get("occupation").asText());
-        }
-        return u;
-    }
-
-    private void initializeDefaultUsers() {
-        // Main Admin with fixed credentials (fully verified and approved)
-        Admin mainAdmin = new Admin(1L, "Main Admin", "admin1@ds.gmail.com",
-                securityService.hashPassword("admin1ds"), true, "MAIN_ADMIN_001");
-        mainAdmin.setEmailVerified(true);
-        mainAdmin.setIdVerified(true);
-        mainAdmin.setApproved(true);
-        users.add(mainAdmin);
-
-        // Test users (verified and approved for testing)
-        Buyer buyer = new Buyer(2L, "Buyer User", "buyer@example.com",
-                securityService.hashPassword("buyer123"), true, "BUYER001");
-        buyer.setEmailVerified(true);
-        buyer.setIdVerified(true);
-        buyer.setApproved(true);
-        users.add(buyer);
-
-        Seller seller = new Seller(3L, "Seller User", "seller@example.com",
-                securityService.hashPassword("seller123"), true, "SELLER001");
-        seller.setEmailVerified(true);
-        seller.setIdVerified(true);
-        seller.setApproved(true);
-        users.add(seller);
-
-        Agent agent = new Agent(4L, "Agent User", "agent@example.com",
-                securityService.hashPassword("agent123"), true, "AGENT001");
-        agent.setEmailVerified(true);
-        agent.setIdVerified(true);
-        agent.setApproved(true);
-        users.add(agent);
     }
 
     public User login(String rawEmail, String password) {
         if (rawEmail == null)
             return null;
         String email = rawEmail.trim(); // TRIM INPUT
+        System.out.println("DEBUG: Login attempt for email: '" + email + "'");
+        System.out.println("DEBUG: Total users in system (DB): " + userRepository.count());
         // Emergency Fallback: Ensure Main Admin can always login
         if (email.equalsIgnoreCase("admin1@ds.gmail.com") && password.equals("admin1ds")) {
             System.out.println("Login successful (System Admin Override).");
@@ -203,48 +89,64 @@ public class AuthService {
             return admin;
         }
 
-        for (User user : users) {
-            if (user.getEmail().equalsIgnoreCase(email)) {
-                // Verify password
-                if (user.getPassword() == null || !securityService.verifyPassword(password, user.getPassword())) {
-                    System.out.println("Login failed: Invalid credentials.");
-                    throw new InvalidCredentialsException("Invalid credentials");
-                }
+        Optional<User> userOpt = userRepository.findByEmailIgnoreCase(email);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            // DEBUG: Log user found and password check
+            System.out.println("DEBUG: User found: " + user.getEmail() + ", Role: " + user.getRole());
+            System.out.println("DEBUG: Password hash in DB: " + (user.getPassword() != null
+                    ? user.getPassword().substring(0, Math.min(20, user.getPassword().length())) + "..."
+                    : "NULL"));
+            System.out.println("DEBUG: Email verified: " + user.isEmailVerified() + ", ID verified: "
+                    + user.isIdVerified() + ", Approved: " + user.isApproved());
 
-                String role = user.getRole().toLowerCase();
-
-                // Rule 1: Email must always be verified (skip for Main Admin override logic
-                // handled above)
-                if (!user.isEmailVerified() && !isMainAdmin(user)) {
-                    System.out.println("Login failed: Email not verified.");
-                    throw new EmailNotVerifiedException("Email not verified");
-                }
-
-                // Rule 2: Role-based checks
-                if (role.equals("buyer")) {
-                    // Buyer only needs email verification (checked above)
-                    // No admin approval or ID verification required
-                } else if (role.equals("admin")) {
-                    // Admins must be verified/approved
-                    if (!user.isVerified() && !isMainAdmin(user)) {
-                        System.out.println("Login failed: Admin account not verified.");
-                        throw new AccountPendingApprovalException("Admin account not verified");
-                    }
-                } else {
-                    // Sellers and Agents
-                    if (!user.isIdVerified()) {
-                        System.out.println("Login failed: ID document not verified.");
-                        throw new IdNotVerifiedException("ID document not verified");
-                    }
-                    if (!user.isApproved()) {
-                        System.out.println("Login failed: Account pending admin approval.");
-                        throw new AccountPendingApprovalException("Account pending admin approval");
-                    }
-                }
-
-                System.out.println("Login successful for: " + user.getName());
-                return user;
+            // Verify password
+            if (user.getPassword() == null) {
+                System.out.println("DEBUG: Login failed: User password is NULL");
+                throw new InvalidCredentialsException("Invalid credentials");
             }
+
+            boolean passwordMatch = securityService.verifyPassword(password, user.getPassword());
+            System.out.println("DEBUG: Password verification result: " + passwordMatch);
+
+            if (!passwordMatch) {
+                System.out.println("DEBUG: Login failed: Password mismatch");
+                throw new InvalidCredentialsException("Invalid credentials");
+            }
+
+            String role = user.getRole().toLowerCase();
+
+            // Rule 1: Email must always be verified (skip for Main Admin override logic
+            // handled above)
+            if (!user.isEmailVerified() && !isMainAdmin(user)) {
+                System.out.println("Login failed: Email not verified.");
+                throw new EmailNotVerifiedException("Email not verified");
+            }
+
+            // Rule 2: Role-based checks
+            if (role.equals("buyer")) {
+                // Buyer only needs email verification (checked above)
+                // No admin approval or ID verification required
+            } else if (role.equals("admin")) {
+                // Admins must be verified/approved
+                if (!user.isVerified() && !isMainAdmin(user)) {
+                    System.out.println("Login failed: Admin account not verified.");
+                    throw new AccountPendingApprovalException("Admin account not verified");
+                }
+            } else {
+                // Sellers and Agents
+                if (!user.isIdVerified()) {
+                    System.out.println("Login failed: ID document not verified.");
+                    throw new IdNotVerifiedException("ID document not verified");
+                }
+                if (!user.isApproved()) {
+                    System.out.println("Login failed: Account pending admin approval.");
+                    throw new AccountPendingApprovalException("Account pending admin approval");
+                }
+            }
+
+            System.out.println("Login successful for: " + user.getName());
+            return user;
         }
         System.out.println("Login failed: User not found.");
         throw new InvalidCredentialsException("Invalid credentials");
@@ -254,7 +156,7 @@ public class AuthService {
         String name = rawName != null ? rawName.trim() : "";
         String email = rawEmail != null ? rawEmail.trim() : "";
 
-        if (users.stream().anyMatch(u -> u.getEmail().equalsIgnoreCase(email))) {
+        if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
             System.out.println("Registration failed: Email already exists.");
             return null;
         }
@@ -284,16 +186,15 @@ public class AuthService {
             return null;
         }
 
-        Long newId = users.stream().mapToLong(User::getId).max().orElse(0) + 1;
         String hashed = securityService.hashPassword(password);
 
         boolean isVerified = false;
 
         User newUser = switch (role.toLowerCase()) {
-            case "admin" -> new Admin(newId, name, email, hashed, isVerified, govId);
-            case "buyer" -> new Buyer(newId, name, email, hashed, isVerified, govId);
-            case "seller" -> new Seller(newId, name, email, hashed, isVerified, govId);
-            case "agent" -> new Agent(newId, name, email, hashed, isVerified, govId);
+            case "admin" -> new Admin(null, name, email, hashed, isVerified, govId);
+            case "buyer" -> new Buyer(null, name, email, hashed, isVerified, govId);
+            case "seller" -> new Seller(null, name, email, hashed, isVerified, govId);
+            case "agent" -> new Agent(null, name, email, hashed, isVerified, govId);
             default -> null;
         };
 
@@ -303,8 +204,7 @@ public class AuthService {
                 newUser.setApproved(true);
             }
 
-            users.add(newUser);
-            saveUsers();
+            newUser = userRepository.save(newUser);
             if (isAdminRole) {
                 System.out.println(
                         "Admin registration successful! Please verify your email and wait for main admin approval.");
@@ -319,14 +219,14 @@ public class AuthService {
     }
 
     public void verifyUser(Long userId) {
-        Optional<User> userOpt = users.stream().filter(u -> u.getId().equals(userId)).findFirst();
+        Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             user.setVerified(true);
             user.setIdVerified(true); // Also verify ID if document was checked
             user.setEmailVerified(true); // FIX: Ensure email is marked verified when admin manually verifies
             user.setApproved(true); // Grant approval for login
-            saveUsers();
+            userRepository.save(user);
             System.out.println("User verified: " + user.getName());
         } else {
             System.out.println("User not found.");
@@ -334,11 +234,11 @@ public class AuthService {
     }
 
     public List<User> getUnverifiedUsers() {
-        return users.stream().filter(u -> !u.isVerified()).collect(Collectors.toList());
+        return userRepository.findAll().stream().filter(u -> !u.isVerified()).collect(Collectors.toList());
     }
 
     public List<User> getAllUsers() {
-        return new ArrayList<>(users);
+        return userRepository.findAll();
     }
 
     /**
@@ -352,14 +252,14 @@ public class AuthService {
      * Approve a user (admin workflow)
      */
     public void approveUser(Long userId) {
-        Optional<User> userOpt = users.stream().filter(u -> u.getId().equals(userId)).findFirst();
+        Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             user.setApproved(true);
             user.setEmailVerified(true);
             user.setIdVerified(true);
             user.setVerified(true);
-            saveUsers();
+            userRepository.save(user);
             System.out.println("User approved: " + user.getName());
         } else {
             System.out.println("User not found.");
@@ -370,13 +270,12 @@ public class AuthService {
      * Reject a user (admin workflow)
      */
     public void rejectUser(Long userId, String reason) {
-        Optional<User> userOpt = users.stream().filter(u -> u.getId().equals(userId)).findFirst();
+        Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             System.out.println("User rejected: " + user.getName() + " - Reason: " + reason);
             // Optionally delete the user
-            users.remove(user);
-            saveUsers();
+            userRepository.delete(user);
         } else {
             System.out.println("User not found.");
         }
@@ -386,7 +285,7 @@ public class AuthService {
      * Get users pending approval
      */
     public List<User> getPendingApprovalUsers() {
-        return users.stream()
+        return userRepository.findAll().stream()
                 .filter(u -> !u.isApproved() && !isMainAdmin(u))
                 .collect(Collectors.toList());
     }
@@ -395,39 +294,28 @@ public class AuthService {
      * Get user by email
      */
     public User getUserByEmail(String email) {
-        return users.stream()
-                .filter(u -> u.getEmail().equalsIgnoreCase(email))
-                .findFirst()
-                .orElse(null);
+        return userRepository.findByEmailIgnoreCase(email).orElse(null);
     }
 
     /**
      * Get user by ID
      */
     public User getUserById(Long id) {
-        return users.stream()
-                .filter(u -> u.getId().equals(id))
-                .findFirst()
-                .orElse(null);
+        return userRepository.findById(id).orElse(null);
     }
 
     /**
      * Get all unverified admins (for main admin to review)
      */
     public List<User> getUnverifiedAdmins() {
-        return users.stream()
+        return userRepository.findAll().stream()
                 .filter(u -> u.getRole().equalsIgnoreCase("admin") && !u.isApproved())
                 .collect(Collectors.toList());
     }
 
     public void updateUser(User user) {
-        Optional<User> existing = users.stream().filter(u -> u.getId().equals(user.getId())).findFirst();
-        if (existing.isPresent()) {
-            if (existing.get() != user) {
-                int index = users.indexOf(existing.get());
-                users.set(index, user);
-            }
-            saveUsers();
-        }
+        // JPA will handle insert/update based on the entity ID
+        userRepository.save(user);
+        System.out.println("DEBUG: User updated and saved: " + user.getEmail());
     }
 }

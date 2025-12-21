@@ -17,6 +17,13 @@ repositories {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // JPA / Hibernate for database access
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // PostgreSQL driver (you can switch to MySQL or another DB if you prefer)
+    runtimeOnly 'org.postgresql:postgresql'
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 

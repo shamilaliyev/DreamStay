@@ -50,6 +50,25 @@ const OwnerProfile = () => {
         fetchData();
     }, [id]);
 
+    const [isReporting, setIsReporting] = useState(false);
+    const [reportData, setReportData] = useState({ reason: '', description: '' });
+
+    const handleReport = async (e) => {
+        e.preventDefault();
+        try {
+            await api.post('/reports', {
+                reportedUserId: owner.id,
+                reason: reportData.reason,
+                description: reportData.description
+            });
+            alert('User reported successfully. Admins will review this.');
+            setIsReporting(false);
+            setReportData({ reason: '', description: '' });
+        } catch (error) {
+            alert('Failed to report user: ' + (error.response?.data?.message || error.message));
+        }
+    };
+
     if (loading) return <div className="text-center mt-5">Loading...</div>;
     if (!owner) return <div className="text-center mt-5">User not found</div>;
 
@@ -57,7 +76,14 @@ const OwnerProfile = () => {
         <div className="container animate-fade-in" style={{ marginTop: '2rem' }}>
             <button onClick={() => navigate(-1)} style={{ background: 'none', color: '#666', border: 'none', padding: 0, marginBottom: '1rem', cursor: 'pointer' }}>← Back</button>
 
-            <div className="card" style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <div className="card" style={{ textAlign: 'center', marginBottom: '2rem', position: 'relative' }}>
+                <button
+                    onClick={() => setIsReporting(true)}
+                    style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.9rem', cursor: 'pointer' }}
+                >
+                    🚩 Report User
+                </button>
+
                 <div
                     style={{
                         width: '120px',
@@ -112,6 +138,43 @@ const OwnerProfile = () => {
                     )}
                 </div>
             </div>
+
+            {/* Report Modal */}
+            {isReporting && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                    <div className="card" style={{ width: '100%', maxWidth: '400px' }}>
+                        <h3>Report User</h3>
+                        <form onSubmit={handleReport}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Reason</label>
+                            <select
+                                value={reportData.reason}
+                                onChange={e => setReportData({ ...reportData, reason: e.target.value })}
+                                style={{ width: '100%', marginBottom: '1rem' }}
+                                required
+                            >
+                                <option value="">Select a reason</option>
+                                <option value="spam">Spam or Scam</option>
+                                <option value="inappropriate">Inappropriate Content</option>
+                                <option value="harassment">Harassment</option>
+                                <option value="other">Other</option>
+                            </select>
+
+                            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Description</label>
+                            <textarea
+                                value={reportData.description}
+                                onChange={e => setReportData({ ...reportData, description: e.target.value })}
+                                style={{ width: '100%', minHeight: '80px', marginBottom: '1rem' }}
+                                required
+                            />
+
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                                <button type="button" onClick={() => setIsReporting(false)} style={{ background: '#ef4444' }}>Cancel</button>
+                                <button type="submit">Submit Report</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             <h3 style={{ borderBottom: '1px solid #eee', paddingBottom: '0.5rem', marginBottom: '1.5rem' }}>Reviews</h3>
             {reviews.length === 0 ? (

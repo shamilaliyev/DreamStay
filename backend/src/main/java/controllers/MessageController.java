@@ -98,4 +98,49 @@ public class MessageController {
             @RequestBody MessageRequest request) {
         return sendMessage(userId, request);
     }
+
+    // --- New Features ---
+
+    @GetMapping("/search")
+    public ResponseEntity<?> searchMessages(
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestParam String q) {
+        List<Message> results = mailService.searchMessages(userId, q);
+        List<MessageDTO> dtos = results.stream()
+                .map(dtoMapper::toMessageDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
+    @DeleteMapping("/chat/{partnerId}")
+    public ResponseEntity<?> deleteConversation(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long partnerId) {
+        mailService.deleteConversation(userId, partnerId);
+        return ResponseEntity.ok("Conversation deleted");
+    }
+
+    @PostMapping("/block/{blockedId}")
+    public ResponseEntity<?> blockUser(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long blockedId) {
+        mailService.blockUser(userId, blockedId);
+        return ResponseEntity.ok("User blocked");
+    }
+
+    @DeleteMapping("/block/{blockedId}")
+    public ResponseEntity<?> unblockUser(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long blockedId) {
+        mailService.unblockUser(userId, blockedId);
+        return ResponseEntity.ok("User unblocked");
+    }
+
+    @GetMapping("/block/{blockedId}")
+    public ResponseEntity<Boolean> isBlocked(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long blockedId) {
+        boolean blocked = mailService.isBlocked(userId, blockedId);
+        return ResponseEntity.ok(blocked);
+    }
 }

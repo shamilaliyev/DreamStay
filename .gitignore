@@ -7,9 +7,12 @@ backend/properties.json
 backend/users.json
 backend/messages.json
 
+
 # Build outputs
-backend/build/
-backend/.gradle/
+/backend/build/
+/backend/.gradle/
+*.sql
+
 
 # Node
 frontend/node_modules/

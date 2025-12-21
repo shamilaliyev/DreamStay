@@ -11,6 +11,26 @@ const PropertyDetails = () => {
 
     const [reviews, setReviews] = useState([]);
 
+    // Report state
+    const [isReporting, setIsReporting] = useState(false);
+    const [reportData, setReportData] = useState({ reason: '', description: '' });
+
+    const handleReport = async (e) => {
+        e.preventDefault();
+        try {
+            await api.post('/reports', {
+                reportedPropertyId: property.id,
+                reason: reportData.reason,
+                description: reportData.description
+            });
+            alert('Property reported successfully. Admins will review this.');
+            setIsReporting(false);
+            setReportData({ reason: '', description: '' });
+        } catch (error) {
+            alert('Failed to report: ' + (error.response?.data?.message || error.message));
+        }
+    };
+
     useEffect(() => {
         const fetchProperty = async () => {
             try {
@@ -140,8 +160,56 @@ const PropertyDetails = () => {
                 </div>
 
                 <h3>Description</h3>
-                <p style={{ lineHeight: '1.6', color: '#334155', whiteSpace: 'pre-wrap' }}>{property.description}</p>
+                <h3 style={{ lineHeight: '1.6', color: '#334155', whiteSpace: 'pre-wrap' }}>{property.description}</h3>
+
+                {/* Report Property Button */}
+                <div style={{ marginTop: '1rem', textAlign: 'right' }}>
+                    <button
+                        onClick={() => setIsReporting(true)}
+                        style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.85rem', cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                        Report this Listing
+                    </button>
+                </div>
             </div>
+
+            {/* Report Modal */}
+            {isReporting && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                    <div className="card" style={{ width: '100%', maxWidth: '400px' }}>
+                        <h3>Report Property</h3>
+                        <form onSubmit={handleReport}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Reason</label>
+                            <select
+                                value={reportData.reason}
+                                onChange={e => setReportData({ ...reportData, reason: e.target.value })}
+                                style={{ width: '100%', marginBottom: '1rem' }}
+                                required
+                            >
+                                <option value="">Select a reason</option>
+                                <option value="fake">Fake Listing</option>
+                                <option value="inaccurate">Inaccurate Description</option>
+                                <option value="spam">Spam / Scam</option>
+                                <option value="offensive">Offensive Content</option>
+                                <option value="other">Other</option>
+                            </select>
+
+                            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Description</label>
+                            <textarea
+                                value={reportData.description}
+                                onChange={e => setReportData({ ...reportData, description: e.target.value })}
+                                style={{ width: '100%', minHeight: '80px', marginBottom: '1rem' }}
+                                required
+                            />
+
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                                <button type="button" onClick={() => setIsReporting(false)} style={{ background: '#ef4444' }}>Cancel</button>
+                                <button type="submit">Submit Report</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {/* Owner Section */}
             <div className="card" style={{ marginBottom: '2rem' }}>

@@ -1,15 +1,30 @@
 package models;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "messages")
 public class Message {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private Long senderId;
     private Long recipientId;
     private Long propertyId; // Optional, can be null
     private String text;
     private LocalDateTime timestamp;
     private boolean isRead;
+    private Boolean isBlocked = false; // changed to Boolean to allow nulls during migration
+
+    protected Message() {
+        // JPA requires no-arg constructor
+    }
 
     public Message(Long id, Long senderId, Long recipientId, Long propertyId, String text) {
         this.id = id;
@@ -19,6 +34,7 @@ public class Message {
         this.text = text;
         this.timestamp = LocalDateTime.now();
         this.isRead = false;
+        this.isBlocked = false;
     }
 
     // Getters and Setters
@@ -55,6 +71,14 @@ public class Message {
         isRead = read;
     }
 
+    public Boolean isBlocked() {
+        return isBlocked != null && isBlocked;
+    }
+
+    public void setBlocked(Boolean blocked) {
+        isBlocked = blocked;
+    }
+
     @Override
     public String toString() {
         return "Message{" +
@@ -64,6 +88,7 @@ public class Message {
                 ", prop=" + propertyId +
                 ", time=" + timestamp +
                 ", read=" + isRead +
+                ", blocked=" + isBlocked +
                 ", text='" + text + '\'' +
                 '}';
     }

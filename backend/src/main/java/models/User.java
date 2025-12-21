@@ -1,41 +1,71 @@
 package models;
 
-/** 
-* author @shamilaliyev Shami Aliyev
-*
- * The `User` class serves as a base for different user roles (e.g., Admin) and defines common attributes
- * such as ID, name, email, and role. It also integrates messaging functionality via the `MailService`.
- * 
- * Features:
- * - Common attributes: ID, name, email, and role with getter/setter methods.
- * - Shared `MailService` for messaging between users.
- * - Abstract `showMenu` method to enforce implementation in subclasses.
- * - Provides a string representation of the user for easy display.
+/**
+ * author @shamilaliyev Shami Aliyev
+ *
+ * The `User` class serves as a base for different user roles (e.g., Admin) and
+ * defines common attributes such as ID, name, email, and role.
+ *
+ * For the Spring Boot REST backend, this class is also a JPA entity stored in
+ * the relational database.
  */
 
-import services.MailService;
-import services.PropertyManager;
-import services.ReviewService;
-import services.VerificationService;
-import java.util.List;
-import models.Message;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.Table;
 
+@Entity
+@Table(name = "users")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 public abstract class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String name;
+
+    @Column(nullable = false, unique = true)
     private String email;
+
+    @Column(nullable = false)
     private String role;
+
+    @Column(nullable = false)
     private String password;
-    private boolean isVerified; // Legacy field - now represents overall verification
-    private boolean emailVerified; // Email verification status
-    private boolean idVerified; // ID document verification status
-    private boolean isApproved; // Admin approval status
+
+    // Legacy field - now represents overall verification
+    private boolean isVerified;
+
+    // Email verification status
+    private boolean emailVerified;
+
+    // ID document verification status
+    private boolean idVerified;
+
+    // Admin approval status
+    private boolean isApproved;
+
     private String governmentId;
-    private String idDocumentPath; // Path to uploaded ID document
-    private double averageRating; // Renamed from rating for clarity
+
+    // Path to uploaded ID document
+    private String idDocumentPath;
+
+    // Renamed from rating for clarity
+    private double averageRating;
+
     private int reviewCount;
-    private String verificationCode; // Temporary email verification code
-    private long verificationCodeExpiry; // Expiry timestamp for verification code
+
+    // Temporary email verification code
+    private String verificationCode;
+
+    // Expiry timestamp for verification code
+    private long verificationCodeExpiry;
 
     // Profile Fields
     private String avatarPath;
@@ -44,10 +74,11 @@ public abstract class User {
     private String city;
     private String occupation;
 
-    protected MailService mailService;
-    protected PropertyManager propertyManager;
-    protected ReviewService reviewService;
-    protected VerificationService verificationService;
+    // Service fields removed - Entity should not hold Service references
+
+    // JPA requires a no-arg constructor
+    protected User() {
+    }
 
     public User(Long id, String name, String email, String role, String password, boolean isVerified,
             String governmentId) {
@@ -68,21 +99,7 @@ public abstract class User {
         this.verificationCodeExpiry = 0;
     }
 
-    public void setMailService(MailService mailService) {
-        this.mailService = mailService;
-    }
-
-    public void setPropertyManager(PropertyManager propertyManager) {
-        this.propertyManager = propertyManager;
-    }
-
-    public void setReviewService(ReviewService reviewService) {
-        this.reviewService = reviewService;
-    }
-
-    public void setVerificationService(VerificationService verificationService) {
-        this.verificationService = verificationService;
-    }
+    // Setters for services removed
 
     // Getters and Setters for fields
     public Long getId() {

@@ -1,62 +1,23 @@
 package services;
 
-import models.Review;
-import models.User;
-import java.io.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import models.Review;
+import models.User;
+import repositories.ReviewRepository;
+
 public class ReviewService {
-    private static final String FILE_PATH = "reviews.json";
-    private List<Review> reviews;
-    private AuthService authService;
-    private MessageRepository messageRepository;
 
-    public ReviewService(AuthService authService, MessageRepository messageRepository) {
+    private final AuthService authService;
+    private final MessageRepository messageManager; // Renamed for clarity in my mind, but class is still
+                                                    // MessageRepository
+    private final ReviewRepository reviewRepository;
+
+    public ReviewService(AuthService authService, MessageRepository messageManager, ReviewRepository reviewRepository) {
         this.authService = authService;
-        this.messageRepository = messageRepository;
-        this.reviews = new ArrayList<>();
-        loadReviews();
-    }
-
-    private void loadReviews() {
-        File file = new File(FILE_PATH);
-        if (!file.exists())
-            return;
-
-        // Simple mock load (skipping full JSON parse for brevity, assuming empty start
-        // or implement if critical)
-        // For prototype, we will just start empty or use simple text storage if needed.
-        // But prompt asked for JSON. I'll implement simple JSON loading if time permits
-        // or just skeleton.
-        // Implementing simple loader.
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null)
-                sb.append(line);
-            parseJson(sb.toString());
-        } catch (IOException e) {
-            System.err.println("Error loading reviews: " + e.getMessage());
-        }
-    }
-
-    private void saveReviews() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
-            writer.write(toJson());
-        } catch (IOException e) {
-            System.err.println("Error saving reviews: " + e.getMessage());
-        }
-    }
-
-    private void parseJson(String json) {
-        // reuse parsing logic pattern
-    }
-
-    private String toJson() {
-        return "[]"; // Placeholder for prototype if not strictly needed to persist across restarts
-                     // for now
+        this.messageManager = messageManager;
+        this.reviewRepository = reviewRepository;
     }
 
     public void addReview(User reviewer, Long targetUserId, int rating, String comment) {
@@ -70,34 +31,32 @@ public class ReviewService {
         }
 
         // Ensure buyer has contacted seller (interaction validation)
-        if (!messageRepository.hasUserContactedSeller(reviewer.getId(), targetUserId)) {
+        if (!messageManager.hasUserContactedSeller(reviewer.getId(), targetUserId)) {
             throw new IllegalArgumentException("You can only review users you have interacted with.");
         }
 
         // Check if user has already reviewed this target
-        Review existingReview = reviews.stream()
-                .filter(r -> r.getReviewerId().equals(reviewer.getId()) &&
-                        r.getTargetUserId().equals(targetUserId))
-                .findFirst()
-                .orElse(null);
+        if (reviewRepository.existsByReviewerIdAndTargetUserId(reviewer.getId(), targetUserId)) {
+            // For simplicity, let's say we update it if it exists, or just block.
+            // The old code updated it.
+            Review existing = reviewRepository.findByReviewerId(reviewer.getId()).stream()
+                    .filter(r -> r.getTargetUserId().equals(targetUserId))
+                    .findFirst().orElse(null);
 
-        if (existingReview != null) {
-            existingReview.setRating(rating);
-            existingReview.setComment(comment);
-            saveReviews();
-            updateUserRating(targetUserId);
-            System.out.println("Review updated successfully.");
-            return;
+            if (existing != null) {
+                existing.setRating(rating);
+                existing.setComment(comment);
+                reviewRepository.save(existing);
+                updateUserRating(targetUserId);
+                return;
+            }
         }
 
         Review review = new Review(reviewer.getId(), targetUserId, rating, comment);
-        reviews.add(review);
-        saveReviews();
+        reviewRepository.save(review);
 
         // Update user's average rating
         updateUserRating(targetUserId);
-
-        System.out.println("Review added successfully.");
     }
 
     /**
@@ -107,7 +66,7 @@ public class ReviewService {
         List<Review> userReviews = getReviewsForUser(userId);
 
         if (userReviews.isEmpty()) {
-            return;
+            return; // Or set to 0? Keeping old logic.
         }
 
         double totalRating = userReviews.stream()
@@ -116,15 +75,13 @@ public class ReviewService {
 
         double averageRating = totalRating / userReviews.size();
 
-        User target = authService.getAllUsers().stream()
-                .filter(u -> u.getId().equals(userId))
-                .findFirst()
-                .orElse(null);
+        User target = authService.getUserById(userId);
 
         if (target != null) {
             target.setAverageRating(averageRating);
             target.setReviewCount(userReviews.size());
-            authService.saveUsers();
+            // Persist rating changes via AuthService
+            authService.updateUser(target);
         }
     }
 
@@ -153,7 +110,7 @@ public class ReviewService {
     }
 
     public List<Review> getReviewsForUser(Long userId) {
-        return reviews.stream().filter(r -> r.getTargetUserId().equals(userId)).collect(Collectors.toList());
+        return reviewRepository.findByTargetUserId(userId);
     }
 
     /**
@@ -162,7 +119,7 @@ public class ReviewService {
     public List<User> getContactedSellers(Long buyerId) {
         return authService.getAllUsers().stream()
                 .filter(u -> !u.getId().equals(buyerId)) // Exclude self
-                .filter(u -> messageRepository.hasUserContactedSeller(buyerId, u.getId()))
+                .filter(u -> messageManager.hasUserContactedSeller(buyerId, u.getId()))
                 .collect(Collectors.toList());
     }
 }

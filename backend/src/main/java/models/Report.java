@@ -1,13 +1,23 @@
 package models;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
 /**
  * Represents a user report for inappropriate content or behavior
  * Used in admin moderation panel (FR-09, FR-10, FR-11)
  */
+@Entity
+@Table(name = "reports")
 public class Report {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private Long reporterId; // User who created the report
     private Long reportedUserId; // User being reported (can be null if reporting property)
     private Long reportedPropertyId; // Property being reported (can be null if reporting user)
@@ -16,6 +26,9 @@ public class Report {
     private LocalDateTime timestamp;
     private String status; // "PENDING", "REVIEWED", "RESOLVED", "DISMISSED"
     private String adminNotes; // Notes added by admin during review
+
+    protected Report() {
+    }
 
     public Report(Long id, Long reporterId, Long reportedUserId, Long reportedPropertyId,
             String reason, String description) {

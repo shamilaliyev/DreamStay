@@ -12,26 +12,60 @@ package models;
  * and serves as a foundational entity for real estate operations.
  */
 
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Column;
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
+@Table(name = "properties")
 public class Property {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; // Unique identifier for the property
+
     private Long ownerId; // ID of the Seller or Agent who owns this listing
+
     private String title; // Title of the property
+
     private String location; // Location of the property
+
     private double price; // Price of the property
+
     private int rooms;
+
     private int floor;
+
+    @Column(length = 2000) // Allow longer descriptions
     private String description;
-    private List<String> photos;
-    private List<String> videos; // Video file paths
+
+    @ElementCollection
+    private List<String> photos = new ArrayList<>();
+
+    @ElementCollection
+    private List<String> videos = new ArrayList<>(); // Video file paths
+
     private double distanceToMetro; // Distance to nearest metro station in km
+
     private double distanceToUniversity; // Distance to nearest university in km
+
     private boolean isArchived; // Flag to indicate if the property is archived
+
     private boolean isVerified;
+
     private double ratingAverage;
+
     private int ratingCount;
+
+    // JPA requires a no-arg constructor
+    protected Property() {
+    }
 
     // Constructor
     public Property(Long id, Long ownerId, String title, String location, double price, int rooms, int floor,

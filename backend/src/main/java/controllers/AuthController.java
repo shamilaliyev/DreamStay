@@ -79,6 +79,8 @@ public class AuthController {
                 }
 
                 emailVerificationService.sendVerificationCode(newUser);
+                // CRITICAL FIX: Save verification code to user file
+                authService.updateUser(newUser);
                 return ResponseEntity.ok("User registered successfully. check email for verification code.");
             } else {
                 return ResponseEntity.badRequest().body("Registration failed. Email might be in use or invalid data.");
@@ -97,6 +99,8 @@ public class AuthController {
 
         boolean verified = emailVerificationService.verifyCode(user, request.code());
         if (verified) {
+            // CRITICAL FIX: Save user changes to persist email verification
+            authService.updateUser(user);
             return ResponseEntity.ok("Email verified successfully");
         } else {
             return ResponseEntity.badRequest().body("Invalid or expired verification code");
