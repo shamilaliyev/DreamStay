@@ -44,11 +44,19 @@ const Properties = () => {
 
     return (
         <div className="animate-fade-in">
-            <div style={{ marginBottom: '2rem' }}>
-                <h2 className="title">Discover Properties</h2>
+            {/* Hero Section */}
+            <div className="hero">
+                <div className="hero-content">
+                    <h1>Find Your Dream Stay</h1>
+                    <p>Discover luxury villas, cozy apartments, and verified properties.</p>
+                </div>
+            </div>
+
+            <div style={{ marginBottom: '2rem', position: 'relative', zIndex: 10, padding: '0 1rem' }}>
+                <h2 className="title" style={{ display: 'none' }}>Discover Properties</h2> {/* Hidden title since we have Hero */}
 
                 {/* Search Bar */}
-                <form onSubmit={handleSearch} className="card" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', alignItems: 'end' }}>
+                <form onSubmit={handleSearch} className="card" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', alignItems: 'end', maxWidth: '1000px', margin: '0 auto', border: 'none', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}>
                     <div>
                         <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Location / Title</label>
                         <input
