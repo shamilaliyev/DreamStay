@@ -39,49 +39,87 @@ This project was developed for academic purposes and aims to demonstrate:
 - RESTful API
 
 ### Data Storage
-JSON-based data files:
-- `users.json`
-- `properties.json`
-- `reviews.json`
-- `messages.json`
+- PostgreSQL (Migrated from JSON-based storage)
+- `database_dump.sql` included for schema and sample data
 
 ### Other Tools and Concepts
 - Git and GitHub
 - REST APIs
-- Multipart file upload (image handling)
+- Multipart file upload (image/video handling)
+- JWT / Session Management (if applicable)
+
+
+## Key Features
+
+### User Roles
+- **Buyer**: Browse properties, favorite items, contact sellers, write reviews.
+- **Seller**: List properties, manage listings, interact with buyers.
+- **Agent**: Similar to Seller but with verified professional status.
+- **Admin**: Platform oversight, user approval, property verification.
+
+### Core Functionalities
+- **Property Management**: 
+  - Create, edit, and delete listings.
+  - Upload multiple photos and videos.
+  - Detailed property views with location, amenities, and media galleries.
+- **Search & Filter**: Advanced filtering by price, location, rooms, etc.
+- **User Verification**:
+  - ID Document upload for Agents/Sellers.
+  - Admin approval workflow for verified status.
+- **Messaging System**:
+  - Real-time-like messaging between users.
+  - Inbox/Outbox management.
+  - **Blocking**: Users can block others to prevent harassment.
+- **Reviews & Reports**:
+  - Rate and review sellers/agents.
+  - Report inappropriate content or users to Admins.
 
 
 ## Project Structure
 
 ```
-DreamStay14/
+DreamStay/
 │
 ├── frontend/          # Client-side application (React + Vite)
 │   ├── src/
-│   ├── public/
-│   ├── package.json
-│   └── vite.config.js
+│   │   ├── components/# Reusable UI components
+│   │   ├── pages/     # Application public and protected pages
+│   │   └── ...
+│   ├── ...
 │
 ├── backend/           # Server-side application (Spring Boot)
 │   ├── src/
-│   ├── build.gradle
-│   ├── uploads/
-│   └── messages.json
+│   │   ├── main/java/ # Controllers, Models, Services, Repositories
+│   │   └── ...
+│   ├── database_dump.sql # PostgreSQL database schema and data
+│   └── ...
 │
-├── Database/          # JSON-based data storage
-│   ├── users.json
-│   ├── properties.json
-│   ├── reviews.json
-│   └── messages.json
-│
+├── backend_uml.md     # Backend Class Diagram
+├── frontend_uml.md    # Frontend Architecture Diagram
 └── README.md
 ```
 
 
 ## Installation and Running the Project
 
-### Frontend Setup
-```
+### 1. Database Setup (PostgreSQL)
+Before running the backend, you must set up the database.
+
+1.  **Create User & DB**:
+    ```sql
+    CREATE USER dreamstay_user WITH PASSWORD 'password';
+    CREATE DATABASE dreamstay;
+    GRANT ALL PRIVILEGES ON DATABASE dreamstay TO dreamstay_user;
+    ```
+2.  **Import Data**:
+    Navigate to the `backend/` directory and run:
+    ```bash
+    psql -U dreamstay_user -h localhost -d dreamstay -f database_dump.sql
+    ```
+    *(Or use pgAdmin to restore `database_dump.sql`)*
+
+### 2. Frontend Setup
+```bash
 cd frontend
 npm install
 npm run dev
@@ -89,9 +127,8 @@ npm run dev
 The frontend will run by default at:  
 [http://localhost:5173](http://localhost:5173/)
 
-
-### Backend Setup
-```
+### 3. Backend Setup
+```bash
 cd backend
 gradlew bootRun
 ```
