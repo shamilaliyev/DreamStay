@@ -64,12 +64,13 @@ public class DtoMapper {
                 property.getRooms(),
                 property.getFloor(),
                 property.getDescription(),
+                property.getArea() != null ? property.getArea() : 0.0,
                 property.getPhotos() != null ? property.getPhotos().stream().map(this::toPublicUrl).toList()
                         : Collections.emptyList(),
                 property.getVideos() != null ? property.getVideos().stream().map(this::toPublicUrl).toList()
                         : Collections.emptyList(),
-                property.getDistanceToMetro(),
-                property.getDistanceToUniversity(),
+                property.getDistanceToMetro() != null ? property.getDistanceToMetro() : 0.0,
+                property.getDistanceToUniversity() != null ? property.getDistanceToUniversity() : 0.0,
                 property.isArchived(),
                 property.isVerified(),
                 property.getRatingAverage(),
@@ -128,12 +129,13 @@ public class DtoMapper {
                 property.getRooms(),
                 property.getFloor(),
                 property.getDescription(),
+                property.getArea() != null ? property.getArea() : 0.0,
                 property.getPhotos() != null ? property.getPhotos().stream().map(this::toPublicUrl).toList()
                         : Collections.emptyList(),
                 property.getVideos() != null ? property.getVideos().stream().map(this::toPublicUrl).toList()
                         : Collections.emptyList(),
-                property.getDistanceToMetro(),
-                property.getDistanceToUniversity(),
+                property.getDistanceToMetro() != null ? property.getDistanceToMetro() : 0.0,
+                property.getDistanceToUniversity() != null ? property.getDistanceToUniversity() : 0.0,
                 property.isVerified(),
                 property.isArchived(),
 
@@ -160,12 +162,13 @@ public class DtoMapper {
                 property.getRooms(),
                 property.getFloor(),
                 property.getDescription(),
+                property.getArea() != null ? property.getArea() : 0.0,
                 property.getPhotos() != null ? property.getPhotos().stream().map(this::toPublicUrl).toList()
                         : Collections.emptyList(),
                 property.getVideos() != null ? property.getVideos().stream().map(this::toPublicUrl).toList()
                         : Collections.emptyList(),
-                property.getDistanceToMetro(),
-                property.getDistanceToUniversity(),
+                property.getDistanceToMetro() != null ? property.getDistanceToMetro() : 0.0,
+                property.getDistanceToUniversity() != null ? property.getDistanceToUniversity() : 0.0,
                 property.isArchived(),
                 property.isVerified(),
                 property.getRatingAverage(),

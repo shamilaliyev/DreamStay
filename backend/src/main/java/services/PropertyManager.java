@@ -57,7 +57,8 @@ public class PropertyManager {
         });
     }
 
-    public List<Property> search(String keyword, Double minPrice, Double maxPrice, Integer rooms) {
+    public List<Property> search(String keyword, Double minPrice, Double maxPrice, Integer rooms, Integer floor,
+            Double minArea, Double maxArea, Double maxDistanceToMetro, Double maxDistanceToUniversity) {
         // Fetch all verified non-archived properties and filter in memory (or use
         // custom query)
         // For simplicity migrating existing logic:
@@ -68,6 +69,13 @@ public class PropertyManager {
                 .filter(p -> minPrice == null || p.getPrice() >= minPrice)
                 .filter(p -> maxPrice == null || p.getPrice() <= maxPrice)
                 .filter(p -> rooms == null || p.getRooms() == rooms)
+                .filter(p -> floor == null || p.getFloor() == floor)
+                .filter(p -> minArea == null || (p.getArea() != null && p.getArea() >= minArea))
+                .filter(p -> maxArea == null || (p.getArea() != null && p.getArea() <= maxArea))
+                .filter(p -> maxDistanceToMetro == null
+                        || (p.getDistanceToMetro() != null && p.getDistanceToMetro() <= maxDistanceToMetro))
+                .filter(p -> maxDistanceToUniversity == null || (p.getDistanceToUniversity() != null
+                        && p.getDistanceToUniversity() <= maxDistanceToUniversity))
                 .collect(Collectors.toList());
     }
 

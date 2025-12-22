@@ -78,10 +78,18 @@ const AdminPropertyDetails = () => {
                     <h3>Description</h3>
                     <p style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{property.description || 'No description provided.'}</p>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginTop: '2rem', textAlign: 'center' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1rem', marginTop: '2rem', textAlign: 'center' }}>
                         <div style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '8px' }}>
                             <div className="text-muted text-sm">Price</div>
                             <div style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>${property.price}</div>
+                        </div>
+                        <div style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '8px' }}>
+                            <div className="text-muted text-sm">Area</div>
+                            <div style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>{property.area ? property.area : 'N/A'} m²</div>
+                        </div>
+                        <div style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '8px' }}>
+                            <div className="text-muted text-sm">Floor</div>
+                            <div style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>{property.floor}</div>
                         </div>
                         <div style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '8px' }}>
                             <div className="text-muted text-sm">Rooms</div>

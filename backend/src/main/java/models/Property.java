@@ -19,6 +19,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Column;
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,15 +46,20 @@ public class Property {
     @Column(length = 2000) // Allow longer descriptions
     private String description;
 
+    @Column(nullable = true)
+    private Double area; // Area in square meters
+
     @ElementCollection
     private List<String> photos = new ArrayList<>();
 
     @ElementCollection
     private List<String> videos = new ArrayList<>(); // Video file paths
 
-    private double distanceToMetro; // Distance to nearest metro station in km
+    @Column(nullable = true)
+    private Double distanceToMetro; // Distance to nearest metro station in km
 
-    private double distanceToUniversity; // Distance to nearest university in km
+    @Column(nullable = true)
+    private Double distanceToUniversity; // Distance to nearest university in km
 
     private boolean isArchived; // Flag to indicate if the property is archived
 
@@ -69,7 +75,7 @@ public class Property {
 
     // Constructor
     public Property(Long id, Long ownerId, String title, String location, double price, int rooms, int floor,
-            String description, boolean isArchived, boolean isVerified) {
+            String description, Double area, boolean isArchived, boolean isVerified) {
         this.id = id;
         this.ownerId = ownerId;
         this.title = title;
@@ -78,6 +84,7 @@ public class Property {
         this.rooms = rooms;
         this.floor = floor;
         this.description = description;
+        this.area = area;
         this.photos = new ArrayList<>();
         this.videos = new ArrayList<>();
         this.distanceToMetro = 0.0;
@@ -89,17 +96,17 @@ public class Property {
     }
 
     // Constructor for Property Creation (PropertyController)
-    public Property(Long id, String title, String location, double price, int rooms, int floor, String description,
-            Long ownerId, List<String> photos, List<String> videos, double distanceToMetro,
-            double distanceToUniversity) {
-        this.id = id;
+    public Property(Long ownerId, String title, String location, Double price, Integer rooms, Integer floor,
+            String description, Double area, List<String> photos, List<String> videos, Double distanceToMetro,
+            Double distanceToUniversity) {
+        this.ownerId = ownerId;
         this.title = title;
         this.location = location;
         this.price = price;
         this.rooms = rooms;
         this.floor = floor;
         this.description = description;
-        this.ownerId = ownerId;
+        this.area = area;
         this.photos = photos != null ? photos : new ArrayList<>();
         this.videos = videos != null ? videos : new ArrayList<>();
         this.distanceToMetro = distanceToMetro;
@@ -113,7 +120,7 @@ public class Property {
     public Property(long timeMillis, String name2, String location2, double price2) {
         // Keeping this for backward compatibility (or temporary fix until refactor)
         // Defaulting missing values
-        this(timeMillis, null, name2, location2, price2, 0, 0, "", false, false);
+        this(timeMillis, null, name2, location2, price2, 0, 0, "", 0.0, false, false);
     }
 
     // Getters and setters
@@ -197,6 +204,14 @@ public class Property {
         this.description = description;
     }
 
+    public Double getArea() {
+        return area;
+    }
+
+    public void setArea(Double area) {
+        this.area = area;
+    }
+
     public List<String> getPhotos() {
         return photos;
     }
@@ -237,19 +252,19 @@ public class Property {
         this.videos = videos;
     }
 
-    public double getDistanceToMetro() {
+    public Double getDistanceToMetro() {
         return distanceToMetro;
     }
 
-    public void setDistanceToMetro(double distanceToMetro) {
+    public void setDistanceToMetro(Double distanceToMetro) {
         this.distanceToMetro = distanceToMetro;
     }
 
-    public double getDistanceToUniversity() {
+    public Double getDistanceToUniversity() {
         return distanceToUniversity;
     }
 
-    public void setDistanceToUniversity(double distanceToUniversity) {
+    public void setDistanceToUniversity(Double distanceToUniversity) {
         this.distanceToUniversity = distanceToUniversity;
     }
 

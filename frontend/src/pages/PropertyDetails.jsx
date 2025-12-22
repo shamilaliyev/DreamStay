@@ -142,6 +142,10 @@ const PropertyDetails = () => {
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
                     <div style={{ background: '#F8FAFC', padding: '1rem', borderRadius: 'var(--radius)', textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Area</div>
+                        <div style={{ fontSize: '1.2rem', fontWeight: '600' }}>{property.area ? `${property.area} m²` : 'N/A'}</div>
+                    </div>
+                    <div style={{ background: '#F8FAFC', padding: '1rem', borderRadius: 'var(--radius)', textAlign: 'center' }}>
                         <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Bedrooms</div>
                         <div style={{ fontSize: '1.2rem', fontWeight: '600' }}>{property.rooms}</div>
                     </div>

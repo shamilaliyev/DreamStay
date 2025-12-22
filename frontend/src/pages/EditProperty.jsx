@@ -19,6 +19,7 @@ const EditProperty = () => {
         description: '',
         distanceToMetro: '',
         distanceToUniversity: '',
+        area: '',
     });
 
     useEffect(() => {
@@ -36,6 +37,7 @@ const EditProperty = () => {
                     description: p.description || '',
                     distanceToMetro: p.distanceToMetro || '',
                     distanceToUniversity: p.distanceToUniversity || '',
+                    area: p.area || '',
                 });
             } catch (error) {
                 alert("Failed to load property: " + (error.response?.data || error.message));
@@ -65,6 +67,7 @@ const EditProperty = () => {
                 price: parseFloat(formData.price),
                 rooms: parseInt(formData.rooms),
                 floor: parseInt(formData.floor),
+                area: parseFloat(formData.area || 0),
                 distanceToMetro: parseFloat(formData.distanceToMetro || 0),
                 distanceToUniversity: parseFloat(formData.distanceToUniversity || 0)
             };
@@ -125,6 +128,11 @@ const EditProperty = () => {
                             <label>Floor</label>
                             <input type="number" name="floor" value={formData.floor} onChange={handleChange} required />
                         </div>
+                    </div>
+
+                    <div style={{ marginBottom: '1rem' }}>
+                        <label>Area (m²)</label>
+                        <input type="number" step="0.1" name="area" value={formData.area} onChange={handleChange} />
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

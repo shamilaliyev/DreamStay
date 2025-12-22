@@ -8,7 +8,12 @@ const Properties = () => {
         search: '',
         minPrice: '',
         maxPrice: '',
-        rooms: ''
+        rooms: '',
+        floor: '',
+        minArea: '',
+        maxArea: '',
+        maxDistanceToMetro: '',
+        maxDistanceToUniversity: ''
     });
 
     useEffect(() => {
@@ -22,6 +27,11 @@ const Properties = () => {
             if (filters.minPrice) params.append('minPrice', filters.minPrice);
             if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
             if (filters.rooms) params.append('rooms', filters.rooms);
+            if (filters.floor) params.append('floor', filters.floor);
+            if (filters.minArea) params.append('minArea', filters.minArea);
+            if (filters.maxArea) params.append('maxArea', filters.maxArea);
+            if (filters.maxDistanceToMetro) params.append('maxDistanceToMetro', filters.maxDistanceToMetro);
+            if (filters.maxDistanceToUniversity) params.append('maxDistanceToUniversity', filters.maxDistanceToUniversity);
 
             // Use the search endpoint if any filter is active, otherwise default listing
             const endpoint = params.toString() ? `/properties/search?${params.toString()}` : '/properties';
@@ -102,8 +112,31 @@ const Properties = () => {
                         />
                     </div>
                     <button type="submit" style={{ height: '42px', marginTop: 'auto' }}>Search</button>
+
+
+                    {/* Advanced Filters */}
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Floor</label>
+                        <input type="number" name="floor" value={filters.floor} onChange={handleFilterChange} placeholder="Any" style={{ width: '100%' }} />
+                    </div>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Min Area (m²)</label>
+                        <input type="number" name="minArea" value={filters.minArea} onChange={handleFilterChange} placeholder="0" style={{ width: '100%' }} />
+                    </div>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Max Area (m²)</label>
+                        <input type="number" name="maxArea" value={filters.maxArea} onChange={handleFilterChange} placeholder="Any" style={{ width: '100%' }} />
+                    </div>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Max Dist. Metro (km)</label>
+                        <input type="number" name="maxDistanceToMetro" value={filters.maxDistanceToMetro} onChange={handleFilterChange} placeholder="Any" style={{ width: '100%' }} />
+                    </div>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Max Dist. Uni (km)</label>
+                        <input type="number" name="maxDistanceToUniversity" value={filters.maxDistanceToUniversity} onChange={handleFilterChange} placeholder="Any" style={{ width: '100%' }} />
+                    </div>
                 </form>
-            </div>
+            </div >
 
             <div style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>{properties.length} results found</div>
 
@@ -136,13 +169,15 @@ const Properties = () => {
                     </Link>
                 ))}
             </div>
-            {properties.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
-                    <h3>No properties match your filters.</h3>
-                    <p>Try adjusting your search criteria.</p>
-                </div>
-            )}
-        </div>
+            {
+                properties.length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
+                        <h3>No properties match your filters.</h3>
+                        <p>Try adjusting your search criteria.</p>
+                    </div>
+                )
+            }
+        </div >
     );
 };
 
