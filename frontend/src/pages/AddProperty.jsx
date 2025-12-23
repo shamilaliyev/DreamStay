@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosConfig';
 import MediaUploader from '../components/MediaUploader';
+import MapComponent from '../components/MapComponent';
 
 const AddProperty = () => {
     const navigate = useNavigate();
@@ -19,6 +20,8 @@ const AddProperty = () => {
         distanceToMetro: '',
         distanceToUniversity: '',
         area: '',
+        latitude: '',
+        longitude: ''
     });
 
     const handleChange = (e) => {
@@ -26,6 +29,16 @@ const AddProperty = () => {
         setFormData(prev => ({
             ...prev,
             [name]: value
+        }));
+    };
+
+    const handleLocationSelect = (loc) => {
+        setFormData(prev => ({
+            ...prev,
+            latitude: loc.lat,
+            longitude: loc.lng,
+            // Optionally auto-fill location string if reverse geocoding was available, 
+            // but for now we just pin on map.
         }));
     };
 
@@ -40,7 +53,9 @@ const AddProperty = () => {
                 floor: parseInt(formData.floor),
                 area: parseFloat(formData.area || 0),
                 distanceToMetro: parseFloat(formData.distanceToMetro || 0),
-                distanceToUniversity: parseFloat(formData.distanceToUniversity || 0)
+                distanceToUniversity: parseFloat(formData.distanceToUniversity || 0),
+                latitude: parseFloat(formData.latitude || 0),
+                longitude: parseFloat(formData.longitude || 0)
             };
 
             const response = await api.post('/properties', payload);
@@ -86,9 +101,25 @@ const AddProperty = () => {
                             <input type="number" name="price" value={formData.price} onChange={handleChange} required />
                         </div>
                         <div style={{ marginBottom: '1rem' }}>
-                            <label>Location</label>
+                            <label>Location (Address)</label>
                             <input type="text" name="location" value={formData.location} onChange={handleChange} required />
                         </div>
+                    </div>
+
+                    <div style={{ marginBottom: '1rem' }}>
+                        <label>Pin Location on Map (Click to select)</label>
+                        <div style={{ height: '350px', border: '1px solid #ddd', borderRadius: '4px' }}>
+                            <MapComponent
+                                selectedLocation={formData.latitude && formData.longitude ? { lat: parseFloat(formData.latitude), lng: parseFloat(formData.longitude) } : null}
+                                onLocationSelect={handleLocationSelect}
+                                height="100%"
+                            />
+                        </div>
+                        {formData.latitude && (
+                            <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '5px' }}>
+                                Selected: {parseFloat(formData.latitude).toFixed(4)}, {parseFloat(formData.longitude).toFixed(4)}
+                            </div>
+                        )}
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

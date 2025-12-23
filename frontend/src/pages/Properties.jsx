@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axiosConfig';
+import MapComponent from '../components/MapComponent';
 
 const Properties = () => {
     const [properties, setProperties] = useState([]);
+    const [showMap, setShowMap] = useState(false);
     const [filters, setFilters] = useState({
         search: '',
         minPrice: '',
@@ -33,7 +35,6 @@ const Properties = () => {
             if (filters.maxDistanceToMetro) params.append('maxDistanceToMetro', filters.maxDistanceToMetro);
             if (filters.maxDistanceToUniversity) params.append('maxDistanceToUniversity', filters.maxDistanceToUniversity);
 
-            // Use the search endpoint if any filter is active, otherwise default listing
             const endpoint = params.toString() ? `/properties/search?${params.toString()}` : '/properties';
             const response = await api.get(endpoint);
             setProperties(response.data);
@@ -63,121 +64,140 @@ const Properties = () => {
             </div>
 
             <div style={{ marginBottom: '2rem', position: 'relative', zIndex: 10, padding: '0 1rem' }}>
-                <h2 className="title" style={{ display: 'none' }}>Discover Properties</h2> {/* Hidden title since we have Hero */}
+                <form onSubmit={handleSearch} className="card" style={{ maxWidth: '1000px', margin: '0 auto', border: 'none', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', alignItems: 'end' }}>
+                        <div style={{ gridColumn: 'span 2' }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Location / Title</label>
+                            <input
+                                type="text"
+                                name="search"
+                                value={filters.search}
+                                onChange={handleFilterChange}
+                                placeholder="City, Street..."
+                                style={{ width: '100%' }}
+                            />
+                        </div>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Min Price</label>
+                            <input
+                                type="number"
+                                name="minPrice"
+                                value={filters.minPrice}
+                                onChange={handleFilterChange}
+                                placeholder="0"
+                                style={{ width: '100%' }}
+                            />
+                        </div>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Max Price</label>
+                            <input
+                                type="number"
+                                name="maxPrice"
+                                value={filters.maxPrice}
+                                onChange={handleFilterChange}
+                                placeholder="No limit"
+                                style={{ width: '100%' }}
+                            />
+                        </div>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Rooms</label>
+                            <input
+                                type="number"
+                                name="rooms"
+                                value={filters.rooms}
+                                onChange={handleFilterChange}
+                                placeholder="Any"
+                                style={{ width: '100%' }}
+                            />
+                        </div>
+                        <button type="submit" style={{ height: '42px' }}>Search</button>
+                    </div>
 
-                {/* Search Bar */}
-                <form onSubmit={handleSearch} className="card" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', alignItems: 'end', maxWidth: '1000px', margin: '0 auto', border: 'none', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Location / Title</label>
-                        <input
-                            type="text"
-                            name="search"
-                            value={filters.search}
-                            onChange={handleFilterChange}
-                            placeholder="City, Street..."
-                            style={{ width: '100%' }}
-                        />
-                    </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Min Price</label>
-                        <input
-                            type="number"
-                            name="minPrice"
-                            value={filters.minPrice}
-                            onChange={handleFilterChange}
-                            placeholder="0"
-                            style={{ width: '100%' }}
-                        />
-                    </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Max Price</label>
-                        <input
-                            type="number"
-                            name="maxPrice"
-                            value={filters.maxPrice}
-                            onChange={handleFilterChange}
-                            placeholder="No limit"
-                            style={{ width: '100%' }}
-                        />
-                    </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Rooms</label>
-                        <input
-                            type="number"
-                            name="rooms"
-                            value={filters.rooms}
-                            onChange={handleFilterChange}
-                            placeholder="Any"
-                            style={{ width: '100%' }}
-                        />
-                    </div>
-                    <button type="submit" style={{ height: '42px', marginTop: 'auto' }}>Search</button>
-
-
-                    {/* Advanced Filters */}
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Floor</label>
-                        <input type="number" name="floor" value={filters.floor} onChange={handleFilterChange} placeholder="Any" style={{ width: '100%' }} />
-                    </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Min Area (m²)</label>
-                        <input type="number" name="minArea" value={filters.minArea} onChange={handleFilterChange} placeholder="0" style={{ width: '100%' }} />
-                    </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Max Area (m²)</label>
-                        <input type="number" name="maxArea" value={filters.maxArea} onChange={handleFilterChange} placeholder="Any" style={{ width: '100%' }} />
-                    </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Max Dist. Metro (km)</label>
-                        <input type="number" name="maxDistanceToMetro" value={filters.maxDistanceToMetro} onChange={handleFilterChange} placeholder="Any" style={{ width: '100%' }} />
-                    </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Max Dist. Uni (km)</label>
-                        <input type="number" name="maxDistanceToUniversity" value={filters.maxDistanceToUniversity} onChange={handleFilterChange} placeholder="Any" style={{ width: '100%' }} />
-                    </div>
+                    <details style={{ marginTop: '1rem', borderTop: '1px solid #eee', paddingTop: '1rem' }}>
+                        <summary style={{ cursor: 'pointer', color: 'var(--primary)', fontWeight: 'bold' }}>Advanced Filters</summary>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Floor</label>
+                                <input type="number" name="floor" value={filters.floor} onChange={handleFilterChange} placeholder="Any" style={{ width: '100%' }} />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Min Area (m²)</label>
+                                <input type="number" name="minArea" value={filters.minArea} onChange={handleFilterChange} placeholder="0" style={{ width: '100%' }} />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Max Area (m²)</label>
+                                <input type="number" name="maxArea" value={filters.maxArea} onChange={handleFilterChange} placeholder="Any" style={{ width: '100%' }} />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Max Dist. to Metro (km)</label>
+                                <input type="number" name="maxDistanceToMetro" value={filters.maxDistanceToMetro} onChange={handleFilterChange} placeholder="Any" style={{ width: '100%' }} />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Max Dist. to Uni (km)</label>
+                                <input type="number" name="maxDistanceToUniversity" value={filters.maxDistanceToUniversity} onChange={handleFilterChange} placeholder="Any" style={{ width: '100%' }} />
+                            </div>
+                        </div>
+                    </details>
                 </form>
-            </div >
-
-            <div style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>{properties.length} results found</div>
-
-            <div className="grid">
-                {properties.map(p => (
-                    <Link to={`/properties/${p.id}`} key={p.id} className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'transform 0.2s' }}>
-
-                        {/* Image Placeholder or Actual Image */}
-                        <div style={{ height: '200px', backgroundColor: '#E2E8F0', backgroundSize: 'cover', backgroundPosition: 'center', backgroundImage: p.photos && p.photos.length > 0 ? `url(${p.photos[0]})` : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8' }}>
-                            {!p.photos || p.photos.length === 0 ? 'No Image' : ''}
-                        </div>
-
-                        <div style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.5rem' }}>
-                                <h3 style={{ fontSize: '1.25rem', marginBottom: 0 }}>{p.title}</h3>
-                                <span style={{ backgroundColor: '#EEF2FF', color: 'var(--primary)', padding: '0.25rem 0.75rem', borderRadius: '1rem', fontSize: '0.875rem', fontWeight: '600' }}>
-                                    ${p.price.toLocaleString()}
-                                </span>
-                            </div>
-
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '1rem', flex: 1 }}>
-                                {p.location}
-                            </p>
-
-                            <div style={{ display: 'flex', gap: '1rem', fontSize: '0.875rem', color: 'var(--text-muted)', borderTop: '1px solid #F1F5F9', paddingTop: '1rem' }}>
-                                <span>🛏 {p.rooms} Beds</span>
-                                <span>🏢 Floor {p.floor}</span>
-                            </div>
-                        </div>
-                    </Link>
-                ))}
             </div>
-            {
-                properties.length === 0 && (
-                    <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
-                        <h3>No properties match your filters.</h3>
-                        <p>Try adjusting your search criteria.</p>
-                    </div>
-                )
-            }
-        </div >
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', padding: '0 1rem' }}>
+                <div style={{ color: 'var(--text-muted)' }}>
+                    {properties.length} results found
+                </div>
+                <button
+                    onClick={() => setShowMap(!showMap)}
+                    style={{
+                        background: showMap ? 'var(--secondary)' : 'var(--primary)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '0.5rem',
+                        cursor: 'pointer'
+                    }}
+                >
+                    {showMap ? 'Show Comp List' : 'Show Map View'}
+                </button>
+            </div>
+
+            {showMap ? (
+                <div className="card" style={{ padding: 0, height: '600px', overflow: 'hidden', margin: '0 1rem 2rem 1rem', display: 'block' }}>
+                    <MapComponent properties={properties} height="100%" />
+                </div>
+            ) : (
+                <div className="grid">
+                    {properties.map(p => (
+                        <Link to={`/properties/${p.id}`} key={p.id} className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'transform 0.2s' }}>
+                            <div style={{ height: '200px', backgroundColor: '#E2E8F0', backgroundSize: 'cover', backgroundPosition: 'center', backgroundImage: p.photos && p.photos.length > 0 ? `url(${p.photos[0]})` : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8' }}>
+                                {!p.photos || p.photos.length === 0 ? 'No Image' : ''}
+                            </div>
+                            <div style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.5rem' }}>
+                                    <h3 style={{ fontSize: '1.25rem', marginBottom: 0 }}>{p.title}</h3>
+                                    <span style={{ backgroundColor: '#EEF2FF', color: 'var(--primary)', padding: '0.25rem 0.75rem', borderRadius: '1rem', fontSize: '0.875rem', fontWeight: '600' }}>
+                                        ${p.price.toLocaleString()}
+                                    </span>
+                                </div>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '1rem', flex: 1 }}>
+                                    {p.location}
+                                </p>
+                                <div style={{ display: 'flex', gap: '1rem', fontSize: '0.875rem', color: 'var(--text-muted)', borderTop: '1px solid #F1F5F9', paddingTop: '1rem' }}>
+                                    <span>🛏 {p.rooms} Beds</span>
+                                    <span>🏢 Floor {p.floor}</span>
+                                </div>
+                            </div>
+                        </Link>
+                    ))}
+                </div>
+            )}
+
+            {!showMap && properties.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
+                    <h3>No properties match your filters.</h3>
+                    <p>Try adjusting your search criteria.</p>
+                </div>
+            )}
+        </div>
     );
 };
 

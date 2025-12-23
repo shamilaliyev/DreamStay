@@ -32,8 +32,8 @@ public class AppConfig {
     }
 
     @Bean
-    public PropertyManager propertyManager(PropertyRepository propertyRepository) {
-        return new PropertyManager(propertyRepository);
+    public PropertyManager propertyManager(PropertyRepository propertyRepository, MessageRepository messageManager) {
+        return new PropertyManager(propertyRepository, messageManager);
     }
 
     @Bean

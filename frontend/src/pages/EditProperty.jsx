@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api/axiosConfig';
 import MediaUploader from '../components/MediaUploader';
+import MapComponent from '../components/MapComponent';
 
 const EditProperty = () => {
     const navigate = useNavigate();
@@ -20,6 +21,8 @@ const EditProperty = () => {
         distanceToMetro: '',
         distanceToUniversity: '',
         area: '',
+        latitude: '',
+        longitude: ''
     });
 
     useEffect(() => {
@@ -38,6 +41,8 @@ const EditProperty = () => {
                     distanceToMetro: p.distanceToMetro || '',
                     distanceToUniversity: p.distanceToUniversity || '',
                     area: p.area || '',
+                    latitude: p.latitude || '',
+                    longitude: p.longitude || ''
                 });
             } catch (error) {
                 alert("Failed to load property: " + (error.response?.data || error.message));
@@ -57,6 +62,14 @@ const EditProperty = () => {
         }));
     };
 
+    const handleLocationSelect = (loc) => {
+        setFormData(prev => ({
+            ...prev,
+            latitude: loc.lat,
+            longitude: loc.lng
+        }));
+    };
+
     const handleSubmitDetails = async (e) => {
         e.preventDefault();
         try {
@@ -69,7 +82,9 @@ const EditProperty = () => {
                 floor: parseInt(formData.floor),
                 area: parseFloat(formData.area || 0),
                 distanceToMetro: parseFloat(formData.distanceToMetro || 0),
-                distanceToUniversity: parseFloat(formData.distanceToUniversity || 0)
+                distanceToUniversity: parseFloat(formData.distanceToUniversity || 0),
+                latitude: parseFloat(formData.latitude || 0),
+                longitude: parseFloat(formData.longitude || 0)
             };
 
             const response = await api.put(`/properties/${id}`, payload);
@@ -117,6 +132,22 @@ const EditProperty = () => {
                             <label>Location</label>
                             <input type="text" name="location" value={formData.location} onChange={handleChange} required />
                         </div>
+                    </div>
+
+                    <div style={{ marginBottom: '1rem' }}>
+                        <label>Pin Location on Map (Click to update)</label>
+                        <div style={{ height: '350px', border: '1px solid #ddd', borderRadius: '4px' }}>
+                            <MapComponent
+                                selectedLocation={formData.latitude && formData.longitude ? { lat: parseFloat(formData.latitude), lng: parseFloat(formData.longitude) } : null}
+                                onLocationSelect={handleLocationSelect}
+                                height="100%"
+                            />
+                        </div>
+                        {formData.latitude && (
+                            <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '5px' }}>
+                                Selected: {parseFloat(formData.latitude).toFixed(4)}, {parseFloat(formData.longitude).toFixed(4)}
+                            </div>
+                        )}
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/axiosConfig';
+import MapComponent from '../components/MapComponent';
 
 const PropertyDetails = () => {
     const { id } = useParams();
@@ -165,6 +166,19 @@ const PropertyDetails = () => {
 
                 <h3>Description</h3>
                 <h3 style={{ lineHeight: '1.6', color: '#334155', whiteSpace: 'pre-wrap' }}>{property.description}</h3>
+
+                {property.latitude && property.longitude && (
+                    <div style={{ marginTop: '2rem' }}>
+                        <h3>Location</h3>
+                        <div style={{ height: '400px', borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid #E2E8F0' }}>
+                            <MapComponent
+                                properties={[property]}
+                                height="100%"
+                                readOnly={true}
+                            />
+                        </div>
+                    </div>
+                )}
 
                 {/* Report Property Button */}
                 <div style={{ marginTop: '1rem', textAlign: 'right' }}>

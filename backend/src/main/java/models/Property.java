@@ -61,6 +61,12 @@ public class Property {
     @Column(nullable = true)
     private Double distanceToUniversity; // Distance to nearest university in km
 
+    @Column(nullable = true)
+    private Double latitude;
+
+    @Column(nullable = true)
+    private Double longitude;
+
     private boolean isArchived; // Flag to indicate if the property is archived
 
     private boolean isVerified;
@@ -89,6 +95,8 @@ public class Property {
         this.videos = new ArrayList<>();
         this.distanceToMetro = 0.0;
         this.distanceToUniversity = 0.0;
+        this.latitude = 0.0;
+        this.longitude = 0.0;
         this.isArchived = isArchived;
         this.isVerified = isVerified;
         this.ratingAverage = 0.0;
@@ -98,7 +106,7 @@ public class Property {
     // Constructor for Property Creation (PropertyController)
     public Property(Long ownerId, String title, String location, Double price, Integer rooms, Integer floor,
             String description, Double area, List<String> photos, List<String> videos, Double distanceToMetro,
-            Double distanceToUniversity) {
+            Double distanceToUniversity, Double latitude, Double longitude) {
         this.ownerId = ownerId;
         this.title = title;
         this.location = location;
@@ -111,6 +119,8 @@ public class Property {
         this.videos = videos != null ? videos : new ArrayList<>();
         this.distanceToMetro = distanceToMetro;
         this.distanceToUniversity = distanceToUniversity;
+        this.latitude = latitude;
+        this.longitude = longitude;
         this.isArchived = false;
         this.isVerified = false;
         this.ratingAverage = 0.0;
@@ -266,6 +276,22 @@ public class Property {
 
     public void setDistanceToUniversity(Double distanceToUniversity) {
         this.distanceToUniversity = distanceToUniversity;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
     }
 
     public int getRatingCount() {

@@ -150,7 +150,9 @@ public class PropertyController {
                 new ArrayList<>(),
                 new ArrayList<>(),
                 propertyDTO.distanceToMetro(),
-                propertyDTO.distanceToUniversity());
+                propertyDTO.distanceToUniversity(),
+                propertyDTO.latitude(),
+                propertyDTO.longitude());
 
         propertyManager.addProperty(property);
         return ResponseEntity.ok(dtoMapper.toPropertyDTO(property));
@@ -186,6 +188,8 @@ public class PropertyController {
         // Update new fields
         existing.setDistanceToMetro(dto.distanceToMetro());
         existing.setDistanceToUniversity(dto.distanceToUniversity());
+        existing.setLatitude(dto.latitude());
+        existing.setLongitude(dto.longitude());
 
         if (dto.photos() != null)
             existing.setPhotos(dto.photos());

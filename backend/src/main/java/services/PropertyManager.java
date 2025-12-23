@@ -8,9 +8,11 @@ import java.util.stream.Collectors;
 
 public class PropertyManager {
     private final PropertyRepository propertyRepository;
+    private final MessageRepository messageRepository;
 
-    public PropertyManager(PropertyRepository propertyRepository) {
+    public PropertyManager(PropertyRepository propertyRepository, MessageRepository messageRepository) {
         this.propertyRepository = propertyRepository;
+        this.messageRepository = messageRepository;
     }
 
     public void addProperty(Property property) {
@@ -47,6 +49,10 @@ public class PropertyManager {
     }
 
     public void deleteProperty(Long id) {
+        List<models.Message> messages = messageRepository.getMessagesByProperty(id);
+        for (models.Message msg : messages) {
+            messageRepository.deleteMessage(msg.getId());
+        }
         propertyRepository.deleteById(id);
     }
 
